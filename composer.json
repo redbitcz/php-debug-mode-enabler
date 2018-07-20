@@ -1,0 +1,19 @@
+{
+    "name": "jakubboucek/nette-debug-enabler",
+    "description": "Debug mode enabler for Nette framework - safe and clean way to automatize Nette Debug mode at specific environment",
+    "keywords": ["nette", "tracy", "debug"],
+    "license": ["MIT"],
+    "authors": [
+        {
+            "name": "Jakub Bouček",
+            "homepage": "https://www.jakub-boucek.cz"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "nette/utils": "^2.4"
+    },
+    "autoload": {
+        "classmap": ["src/"]
+    }
+}

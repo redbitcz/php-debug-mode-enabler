@@ -7,7 +7,7 @@ Using
 -----
 In `bootstrap.php` wrap first parameter in `setDebugMode([])` function like this:
 ```php
-$configurator->setDebugMode::isDebug(DebugEnabler([], __DIR__ . '/temp'));
+$configurator->setDebugMode(DebugEnabler::isDebug([], __DIR__ . '/temp'));
 ```
 
 In your devstack set for PHP process environment `NETTE_DEBUG=1`. For example in Docker composer file:

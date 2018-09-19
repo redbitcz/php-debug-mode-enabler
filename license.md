@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2017 Redbit s.r.o.
+Copyright (c) 2018 Jakub Bouček
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

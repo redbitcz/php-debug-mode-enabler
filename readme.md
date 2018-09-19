@@ -3,6 +3,12 @@ Debug Enabler for Nette framework
 
 Aafe and clean way to automatize Nette Debug mode at specific environment (Docker for example).
 
+Installation
+------------
+```bash
+composer require jakubboucek/nette-debug-enabler
+```
+
 Using
 -----
 In `bootstrap.php` wrap first parameter in `setDebugMode([])` function like this:

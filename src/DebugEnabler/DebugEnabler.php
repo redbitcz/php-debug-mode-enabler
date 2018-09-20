@@ -30,6 +30,16 @@ class DebugEnabler
      */
     private static $debugEnvName = 'NETTE_DEBUG';
 
+    /**
+     * @var bool
+     */
+    private static $cookieSecure = true;
+
+    /**
+     * @var int
+     */
+    private static $tokenTtl = 3600;
+
 
     /**
      * @param bool|string|array $default
@@ -138,19 +148,36 @@ class DebugEnabler
 
 
     /**
-     *
+     * @param bool $cookieSecure
+     */
+    public static function setCookieSecure(bool $cookieSecure = true): void
+    {
+        self::$cookieSecure = $cookieSecure;
+    }
+
+
+    /**
+     * @param int $tokenTtl
+     */
+    public static function setTokenTtl(int $tokenTtl): void
+    {
+        self::$tokenTtl = $tokenTtl;
+    }
+
+
+    /**
      * @throws \RuntimeException
      */
     public static function turnOn(): void
     {
-        $token = self::getToken();
+        $token = self::getToken(true);
         setcookie(
             self::$debugCookieName,
             $token,
-            time() + 3600,
+            time() + self::$tokenTtl,
             '/',
             '',
-            true,
+            self::$cookieSecure,
             true
         );
     }
@@ -167,7 +194,7 @@ class DebugEnabler
             time() - 3600,
             '/',
             '',
-            true,
+            self::$cookieSecure,
             true
         );
     }

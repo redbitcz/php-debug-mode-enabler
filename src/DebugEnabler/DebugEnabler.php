@@ -35,6 +35,7 @@ class DebugEnabler
      * @param bool|string|array $default
      * @param string|null $workDir
      * @return bool|string|array
+     * @throws \RuntimeException
      */
     public static function isDebug($default = [], ?string $workDir = null)
     {
@@ -55,6 +56,7 @@ class DebugEnabler
     /**
      * @param string|null $workDir
      * @return bool
+     * @throws \RuntimeException
      */
     public static function isDebugByToken(?string $workDir = null): bool
     {
@@ -66,6 +68,7 @@ class DebugEnabler
     /**
      * @param string|null $workDir
      * @return string
+     * @throws \RuntimeException
      */
     private static function getToken(?string $workDir = null): string
     {
@@ -81,11 +84,12 @@ class DebugEnabler
     /**
      * @param string|null $workDir
      * @return string
+     * @throws InvalidStateException
      */
     private static function getTokenFile(?string $workDir = null): string
     {
-        if ($workDir && self::$workDir === null) {
-            throw new InvalidStateException('Unable to ');
+        if ($workDir === null && self::$workDir === null) {
+            throw new InvalidStateException('WorkDir is undefined, unable to work with token file');
         }
         return self::$workDir . self::$tokenFile;
     }
@@ -94,13 +98,14 @@ class DebugEnabler
     /**
      * @param string $tokenFile
      * @return string
+     * @throws \RuntimeException
      */
     private static function createToken($tokenFile): string
     {
         $token = self::generateToken();
         $dirname = \dirname($tokenFile);
         if (!\file_exists($dirname) && !mkdir($dirname, 0777, true) && !is_dir($dirname)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $dirname));
+            throw new \RuntimeException(sprintf('Working directory "%s" was not created', $dirname));
         }
         file_put_contents($tokenFile, $token);
         return $token;
@@ -127,6 +132,7 @@ class DebugEnabler
 
     /**
      *
+     * @throws \RuntimeException
      */
     public static function turnOn(): void
     {

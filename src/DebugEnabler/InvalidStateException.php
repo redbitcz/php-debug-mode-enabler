@@ -6,6 +6,6 @@
 
 namespace JakubBoucek\DebugEnabler;
 
-class InvalidStateException extends \RuntimeException
+class InvalidStateException extends \LogicException
 {
 }

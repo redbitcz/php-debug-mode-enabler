@@ -191,7 +191,7 @@ class DebugEnabler
         setcookie(
             self::$debugCookieName,
             '',
-            time() - 3600,
+            0,
             '/',
             '',
             self::$cookieSecure,

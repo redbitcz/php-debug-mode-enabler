@@ -1,7 +1,7 @@
 Debug Enabler for Nette framework
 =================================
 
-Aafe and clean way to automatize Nette Debug mode at specific environment (Docker for example).
+Safe and clean way to automatize Nette Debug mode at specific environment (Docker for example).
 
 Installation
 ------------
@@ -25,6 +25,28 @@ environment:
 Danger zone
 -----------
 If know what do you do, you can call `DebugEnabler:turnOn()` to enable Debug mode for your browser. **This is very danger, use it carefully!**
+
+Advanced
+--------
+You can choose `Env` or `Token` detection method only instead of automatic detection.
+
+Detection by Environment only:
+```php
+DebugEnabler::isDebugByEnv([])
+```
+
+Detection by Token (and cookie) only:
+```php
+DebugEnabler::isDebugByToken([])
+```
+
+What's the magic `[]`?\
+It's used as return value when no Debug mode is detected and it's move decision to automatic rule
+in Nette Debugger. Use `false` if you want to prevent transfer of detect mode to Debugger.
+
+Is set `workDir` required?\
+Yes if you want to use detect by Token (cookie). 
+
 
 License
 -------

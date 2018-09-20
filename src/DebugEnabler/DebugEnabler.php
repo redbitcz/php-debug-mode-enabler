@@ -39,7 +39,7 @@ class DebugEnabler
      */
     public static function isDebug($default = [], ?string $workDir = null)
     {
-        return self::isDebugByEnv() || self::isDebugByToken($workDir) || $default;
+        return self::isDebugByEnv(false) || self::isDebugByToken(false, $workDir) || $default;
     }
 
 
@@ -47,37 +47,44 @@ class DebugEnabler
      * @param bool|string|array $default
      * @return bool|string|array
      */
-    public static function isDebugByEnv($default = false): bool
+    public static function isDebugByEnv($default = [])
     {
         return (int)getenv(self::$debugEnvName) === 1 || $default;
     }
 
 
     /**
+     * @param bool|string|array $default
      * @param string|null $workDir
-     * @return bool
+     * @return bool|string|array
      * @throws \RuntimeException
      */
-    public static function isDebugByToken(?string $workDir = null): bool
+    public static function isDebugByToken($default = [], ?string $workDir = null)
     {
-        return isset($_COOKIE[self::$debugCookieName])
-            && ($_COOKIE[self::$debugCookieName] === self::getToken($workDir));
+        $isValidToken = isset($_COOKIE[self::$debugCookieName])
+            && ($_COOKIE[self::$debugCookieName] === self::getToken(false, $workDir));
+        return $isValidToken ? true : $default;
     }
 
 
     /**
+     * @param bool $create
      * @param string|null $workDir
-     * @return string
+     * @return string|null
      * @throws \RuntimeException
      */
-    private static function getToken(?string $workDir = null): string
+    private static function getToken(bool $create, ?string $workDir = null): ?string
     {
         $tokenFile = self::getTokenFile($workDir);
-        if (!file_exists($tokenFile)) {
+        if (file_exists($tokenFile)) {
+            return file_get_contents($tokenFile);
+        }
+
+        if ($create) {
             return self::createToken($tokenFile);
         }
 
-        return file_get_contents($tokenFile);
+        return null;
     }
 
 

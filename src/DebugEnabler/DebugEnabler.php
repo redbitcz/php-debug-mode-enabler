@@ -13,32 +13,32 @@ class DebugEnabler
     /**
      * @var string
      */
-    private static $workDir;
+    protected static $workDir;
 
     /**
      * @var string
      */
-    private static $tokenFile = '/debug/token.bin';
+    protected static $tokenFile = '/debug/token.bin';
 
     /**
      * @var string
      */
-    private static $debugCookieName = 'debug-token';
+    protected static $debugCookieName = 'debug-token';
 
     /**
      * @var string
      */
-    private static $debugEnvName = 'NETTE_DEBUG';
+    protected static $debugEnvName = 'NETTE_DEBUG';
 
     /**
      * @var bool
      */
-    private static $cookieSecure = true;
+    protected static $cookieSecure = true;
 
     /**
      * @var int
      */
-    private static $tokenTtl = 3600;
+    protected static $tokenTtl = 3600;
 
 
     /**
@@ -83,7 +83,7 @@ class DebugEnabler
      * @return string|null
      * @throws \RuntimeException
      */
-    private static function getToken(bool $create, ?string $workDir = null): ?string
+    protected static function getToken(bool $create, ?string $workDir = null): ?string
     {
         $tokenFile = self::getTokenFile($workDir);
         if (file_exists($tokenFile)) {
@@ -103,7 +103,7 @@ class DebugEnabler
      * @return string
      * @throws InvalidStateException
      */
-    private static function getTokenFile(?string $workDir = null): string
+    protected static function getTokenFile(?string $workDir = null): string
     {
         if ($workDir === null && self::$workDir === null) {
             throw new InvalidStateException('WorkDir is undefined, unable to work with token file');
@@ -117,7 +117,7 @@ class DebugEnabler
      * @return string
      * @throws \RuntimeException
      */
-    private static function createToken($tokenFile): string
+    protected static function createToken($tokenFile): string
     {
         $token = self::generateToken();
         $dirname = \dirname($tokenFile);
@@ -132,7 +132,7 @@ class DebugEnabler
     /**
      * @return string
      */
-    private static function generateToken(): string
+    protected static function generateToken(): string
     {
         return Random::generate(30);
     }

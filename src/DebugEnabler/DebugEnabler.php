@@ -45,7 +45,8 @@ class DebugEnabler
      * @param bool|string|array $default
      * @param string|null $workDir
      * @return bool|string|array
-     * @throws \RuntimeException
+     * @throws InvalidStateException
+     * @throws \Nette\InvalidArgumentException
      */
     public static function isDebug($default = [], ?string $workDir = null)
     {
@@ -67,12 +68,14 @@ class DebugEnabler
      * @param bool|string|array $default
      * @param string|null $workDir
      * @return bool|string|array
-     * @throws \RuntimeException
+     * @throws InvalidStateException
+     * @throws \Nette\InvalidArgumentException
      */
     public static function isDebugByToken($default = [], ?string $workDir = null)
     {
         $isValidToken = isset($_COOKIE[self::$debugCookieName])
             && ($_COOKIE[self::$debugCookieName] === self::getToken(false, $workDir));
+
         return $isValidToken ? true : $default;
     }
 
@@ -81,7 +84,8 @@ class DebugEnabler
      * @param bool $create
      * @param string|null $workDir
      * @return string|null
-     * @throws \RuntimeException
+     * @throws InvalidStateException
+     * @throws \Nette\InvalidArgumentException
      */
     protected static function getToken(bool $create, ?string $workDir = null): ?string
     {
@@ -115,22 +119,25 @@ class DebugEnabler
     /**
      * @param string $tokenFile
      * @return string
-     * @throws \RuntimeException
+     * @throws \Nette\InvalidArgumentException
+     * @throws InvalidStateException
      */
     protected static function createToken($tokenFile): string
     {
         $token = self::generateToken();
         $dirname = \dirname($tokenFile);
         if (!\file_exists($dirname) && !mkdir($dirname, 0777, true) && !is_dir($dirname)) {
-            throw new \RuntimeException(sprintf('Working directory "%s" was not created', $dirname));
+            throw new InvalidStateException(sprintf('Working directory "%s" was not created', $dirname));
         }
         file_put_contents($tokenFile, $token);
+
         return $token;
     }
 
 
     /**
      * @return string
+     * @throws \Nette\InvalidArgumentException
      */
     protected static function generateToken(): string
     {
@@ -166,7 +173,8 @@ class DebugEnabler
 
 
     /**
-     * @throws \RuntimeException
+     * @throws InvalidStateException
+     * @throws \Nette\InvalidArgumentException
      */
     public static function turnOn(): void
     {

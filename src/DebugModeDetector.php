@@ -6,7 +6,7 @@ namespace Redbitcz\DebugMode;
 
 class DebugModeDetector
 {
-    private const DEBUG_ENV_NAME = 'NETTE_DEBUG';
+    private const DEBUG_ENV_NAME = 'PHP_APP_DEBUG_MODE';
 
     /** @var DebugModeEnabler */
     private $enabler;

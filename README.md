@@ -19,7 +19,7 @@ composer require redbitcz/debug-mode-enabler
 ```
 
 ## Requirements
-Package is require PHP <=7.3 and temporary directory with writable access. 
+Package is require PHP version at least 7.3 and temporary directory with writable access. 
 
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:

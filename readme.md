@@ -1,12 +1,14 @@
-Debug Enabler for Nette framework
-=================================
+PHP Debug Mode Enabler
+======================
+
+> not only for Nette Tracy
 
 Safe and clean way to automatize Nette Debug mode at specific environment (Docker for example).
 
 Installation
 ------------
 ```bash
-composer require jakubboucek/nette-debug-enabler
+composer require redbitcz/debug-mode-enabler
 ```
 
 Using
@@ -52,7 +54,7 @@ License
 -------
 The MIT License (MIT)
 
-Copyright (c) 2018 Jakub Bouček
+Copyright (c) 2020 Redbit s.r.o., Jakub Bouček
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

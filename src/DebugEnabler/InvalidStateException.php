@@ -1,10 +1,11 @@
 <?php
 /**
  * The MIT License (MIT)
- * Copyright (c) 2018 Jakub Bouček
+ * Copyright (c) 2020 Redbit s.r.o., Jakub Bouček
  */
 
-namespace JakubBoucek\DebugEnabler;
+namespace Redbitcz\DebugEnabler;
+
 
 class InvalidStateException extends \LogicException
 {

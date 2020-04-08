@@ -19,7 +19,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Redbitcz\\DebugEnabler\\": "src/DebugEnabler/"
+            "Redbitcz\\DebugEnabler\\": "src/"
         }
     }
 }

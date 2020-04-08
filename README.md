@@ -1,4 +1,5 @@
-# PHP Debug Mode Enabler
+PHP Debug Mode Enabler
+======================
 > not only for Nette Tracy Debugger
 
 Safe and clean way to manage Debug Mode in your app by specific environment and/or manually in app.
@@ -106,8 +107,7 @@ services:
         imported: true
 ```  
 
-License
--------
+## License
 The MIT License (MIT)
 
 Copyright (c) 2020 Redbit s.r.o., Jakub Bouček

@@ -21,9 +21,9 @@ class DebugModeDetector
         return $this->enabler;
     }
 
-    public function isDebug(): bool
+    public function isDebugMode(): bool
     {
-        return $this->isDebugByEnabler() ?? $this->isDebugByEnv() ?? $this->isDebugByIp() ?? false;
+        return $this->isDebugModeByEnabler() ?? $this->isDebugModeByEnv() ?? $this->isDebugModeByIp() ?? false;
     }
 
     /**
@@ -35,7 +35,7 @@ class DebugModeDetector
 
      * @return bool|null
      */
-    public function isDebugByEnabler(): ?bool
+    public function isDebugModeByEnabler(): ?bool
     {
         return $this->enabler->isDebug();
     }
@@ -48,7 +48,7 @@ class DebugModeDetector
      *      - undefined or any other value: null
      * @return bool|null
      */
-    public function isDebugByEnv(): ?bool
+    public function isDebugModeByEnv(): ?bool
     {
         $envValue = getenv(self::DEBUG_ENV_NAME);
         if (is_numeric($envValue) && in_array((int)$envValue, [0, 1], true)) {
@@ -65,7 +65,7 @@ class DebugModeDetector
      *      - otherwise: null
      * @return bool|null
      */
-    public function isDebugByIp(): ?bool
+    public function isDebugModeByIp(): ?bool
     {
         $addr = $_SERVER['REMOTE_ADDR'] ?? php_uname('n');
 

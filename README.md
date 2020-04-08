@@ -103,6 +103,7 @@ Don't forget let it know to DI Container with service declaration in `config.neo
 services:
     debugModeEnabler:
         type: Redbitcz\DebugMode\DebugModeEnabler
+        imported: true
 ```  
 
 License

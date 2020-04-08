@@ -1,4 +1,8 @@
 <?php
+/**
+ * The MIT License (MIT)
+ * Copyright (c) 2020 Redbit s.r.o., Jakub Bouček
+ */
 
 declare(strict_types=1);
 
@@ -32,7 +36,6 @@ class DebugModeDetector
      *      - false (force to turn-off debug mode)
      *      - true (force to turn-on debug mode)
      *      - null (enabler is not activated)
-
      * @return bool|null
      */
     public function isDebugModeByEnabler(): ?bool

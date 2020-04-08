@@ -28,10 +28,9 @@ $debugMode = $detector->isDebugMode(); // boolean
 ```
 where `$tempDir` is required absolute path to temporary directory.
 
-It returns `$debudMode` = `true` when is detected Debug environment or manually switched.
+It returns `$debugMode` = `true` when is detected Debug environment or manually switched.
 
 ### Using with Nette
-
 In `\App\Bootstrap` class use package like this example:
 ```php
 $tempDir = __DIR__ . '/../temp';
@@ -78,6 +77,33 @@ $enabler->activate(true);
 - `$enabler->activate(true)` - force to Debug Mode turn on,
 - `$enabler->activate(false)` - force to Debug Mode turn off,
 - `$enabler->deactivate(false)` - reset back to automatically detection by environment.
+
+### Using with Nette
+Debug Mode Enabler (unlike Debug Mode Detector) can be simply served through DI Container with configuration in `config.neon`:
+```yaml
+services:
+    - Redbitcz\DebugMode\DebugModeEnabler(%tempDir%)
+```
+
+At most cases this example is creates second instance of `DebugModeEnabler` class because first one is already created
+internally with `DebugModeDetector` instance in `Bootstrap`.
+
+To re-use already exists instance you can inject it to DI Container:
+```php
+$tempDir = __DIR__ . '/../temp';
+$debugModeDetector = new \Redbitcz\DebugMode\DebugModeDetector($tempDir);
+
+$configurator = new Configurator();
+$configurator->setDebugMode($debugModeDetector->isDebugMode());
+$configurator->addServices(['debugModeEnabler' => $debugModeDetector->getEnabler()]);
+```
+
+Don't forget let it know to DI Container with service declaration in `config.neon`: 
+```yaml
+services:
+    debugModeEnabler:
+        type: Redbitcz\DebugMode\DebugModeEnabler
+```  
 
 License
 -------

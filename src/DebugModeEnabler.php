@@ -27,6 +27,9 @@ class DebugModeEnabler
     /** @var string */
     private $tempDir;
 
+    /** @var bool|null */
+    private $override;
+
     public function __construct(string $tempDir)
     {
         $this->tempDir = $tempDir;
@@ -51,6 +54,8 @@ class DebugModeEnabler
                 'samesite' => 'Strict',
             ]
         );
+
+        $this->override = $isDebug;
     }
 
 
@@ -72,9 +77,27 @@ class DebugModeEnabler
                 'samesite' => 'Strict',
             ]
         );
+
+        $this->override = null;
+    }
+
+    public function override(bool $isDebug): void
+    {
+        $this->override = $isDebug;
     }
 
     public function isDebug(): ?bool
+    {
+        return $this->isDebugByOverride()
+            ?? $this->isDebugByToken();
+    }
+
+    private function isDebugByOverride(): ?bool
+    {
+        return $this->override;
+    }
+
+    private function isDebugByToken(): ?bool
     {
         $tokenName = $this->getTokenName();
 

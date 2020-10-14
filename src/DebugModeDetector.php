@@ -27,7 +27,10 @@ class DebugModeDetector
 
     public function isDebugMode(): bool
     {
-        return $this->isDebugModeByEnabler() ?? $this->isDebugModeByEnv() ?? $this->isDebugModeByIp() ?? false;
+        return $this->isDebugModeByEnabler()
+            ?? $this->isDebugModeByEnv()
+            ?? $this->isDebugModeByIp()
+            ?? false;
     }
 
     /**

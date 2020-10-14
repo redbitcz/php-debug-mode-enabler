@@ -1,6 +1,6 @@
 PHP Debug Mode Enabler
 ======================
-> not only for Nette Tracy Debugger
+> not only for Tracy debugger
 
 Safe and clean way to manage Debug Mode in your app by specific environment and/or manually in app.
 Package provide secure way to temporary switch Debug Mode of your App at any environment.
@@ -14,12 +14,12 @@ Package allows your app to switch to Debug Mode:
 > NOTE: Package is NOT provide any Debug tools directly – it only gives the app whether to switch to debug mode.
 
 ## Installation
-```bash
+```shell
 composer require redbitcz/debug-mode-enabler
 ```
 
 ## Requirements
-Package is require PHP version at least 7.3 and temporary directory with writable access. 
+Package is requires PHP version at least 7.3 and temporary directory with writable access. 
 
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:

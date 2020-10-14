@@ -1,6 +1,6 @@
 {
     "name": "redbitcz/debug-mode-enabler",
-    "description": "Debug mode enabler (not only for Nette framework) - safe and clean way to manage Debug Mode in your app",
+    "description": "Debug mode enabler (not only for Tracy debugger) - safe and clean way to manage Debug Mode in your app",
     "keywords": ["nette", "tracy", "debug"],
     "license": ["MIT"],
     "authors": [

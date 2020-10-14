@@ -17,7 +17,7 @@ use Nette\Utils\Random;
 class DebugModeEnabler
 {
     private const STORAGE_FILE = '/debug/token.bin';
-    private const DEBUG_COOKIE_NAME = 'debug-token';
+    private const DEBUG_COOKIE_NAME = 'app-debug-token';
     private const TOKEN_LENGTH = 30;
     private const ID_LENGTH = 15;
     private const TTL = 3600;

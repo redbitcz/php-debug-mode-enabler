@@ -8,7 +8,7 @@ Package provide secure way to temporary switch Debug Mode of your App at any env
 ## Features
 Package allows your app to switch to Debug Mode: 
 - automatically on localhost's environment by IP,
-- semi-automatically on any envirovnemnt where you set `PHP_APP_DEBUG_MODE` environment variable (useful for Docker dev-stack), 
+- semi-automatically on any environment where you set `APP_DEBUG` environment variable (useful for Docker dev-stack), 
 - allows you to switch (force turn-on or turn-off) Debug Mode manually.
 
 > NOTE: Package is NOT provide any Debug tools directly – it only gives the app whether to switch to debug mode.
@@ -44,17 +44,17 @@ $configurator->setDebugMode($debugModeDetector->isDebugMode());
 > DI Container ready, you cannot use DI for Debug Mode detecting. 
 
 ## Using with Docker
-If you building custom Docker image for your devstack, add the environment variable `PHP_APP_DEBUG_MODE=1`. For example in `Dockerfile` file:
+If you building custom Docker image for your devstack, add the environment variable `APP_DEBUG=1`. For example in `Dockerfile` file:
 ```
-ENV PHP_APP_DEBUG_MODE 1
+ENV APP_DEBUG 1
 ```
 > Avoid to publish these image to production!
 
 ## Using with Docker compose
-In your devstack set environment variable `PHP_APP_DEBUG_MODE=1`. For example in `docker-compose.yml` file:
+In your devstack set environment variable `APP_DEBUG=1`. For example in `docker-compose.yml` file:
 ```yaml
 environment:
-    PHP_APP_DEBUG_MODE: 1
+    APP_DEBUG: 1
 ```
 
 ## Manually switch

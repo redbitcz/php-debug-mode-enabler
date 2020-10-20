@@ -49,10 +49,16 @@ jobs:
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
-            **/composer.lock
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
           restore-keys: |
             ${{ runner.os }}-composer-
+
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            **/composer.lock
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
 
 
       - name: Install Composer

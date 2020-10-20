@@ -1,7 +1,7 @@
 {
     "name": "redbitcz/debug-mode-enabler",
-    "description": "Debug mode enabler (not only for Tracy debugger) - safe and clean way to manage Debug Mode in your app",
-    "keywords": ["nette", "tracy", "debug"],
+    "description": "Debug mode enabler - safe and clean way to manage Debug Mode in your app",
+    "keywords": ["debug"],
     "license": ["MIT"],
     "authors": [
         {
@@ -29,5 +29,11 @@
         "branch-alias": {
             "dev-master": "2.0-dev"
         }
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^0.12.50"
+    },
+    "scripts": {
+        "phpstan": "phpstan analyze src --level 8"
     }
 }

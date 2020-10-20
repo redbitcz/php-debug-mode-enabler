@@ -135,18 +135,32 @@ class Enabler
 
     // TOKEN LIST ------------------------------------------------------------------------------------------------------
 
+    /**
+     * @return array[]
+     */
     private function loadList(): array
     {
         return $this->readStorage();
     }
 
+    /**
+     * @param bool $value
+     * @param array<int, array> $list
+     * @return string
+     */
     private function addListToken(bool $value, array &$list): string
     {
+        /** @var string $name */
         [$name, $token] = $this->generateToken($value);
         $list[] = $token;
         return $name;
     }
 
+    /**
+     * @param string $name
+     * @param array<int, array> $list
+     * @return bool|null
+     */
     private function getListTokenValue(string $name, array $list): ?bool
     {
         $id = $this->getIdByName($name);
@@ -160,6 +174,10 @@ class Enabler
     }
 
 
+    /**
+     * @param string $name
+     * @param array<int, array> $list
+     */
     private function dropListToken(string $name, array &$list): void
     {
         $id = $this->getIdByName($name);
@@ -171,6 +189,9 @@ class Enabler
         );
     }
 
+    /**
+     * @param array<int, array> $list
+     */
     private function saveList(array $list): void
     {
         // Filter invalid and expired tokens
@@ -186,6 +207,11 @@ class Enabler
 
     // TOKEN UTILS -----------------------------------------------------------------------------------------------------
 
+    /**
+     * @param array<string, string|bool|int> $token
+     * @param string|null $name
+     * @return bool
+     */
     private function isTokenValid(array $token, ?string $name = null): bool
     {
         $now = time();
@@ -206,6 +232,10 @@ class Enabler
         return $result;
     }
 
+    /**
+     * @param bool $value
+     * @return array<int, string|array>
+     */
     private function generateToken(bool $value): array
     {
         $name = $this->generateTokenName();
@@ -221,6 +251,9 @@ class Enabler
 
     // STORAGE ---------------------------------------------------------------------------------------------------------
 
+    /**
+     * @return array<int, array>
+     */
     private function readStorage(): array
     {
         $file = $this->getStorageFileName();
@@ -233,6 +266,10 @@ class Enabler
         }
     }
 
+    /**
+     * @param array<int, array> $list
+     * @throws JsonException
+     */
     private function writeStorage(array $list): void
     {
         $file = $this->getStorageFileName();

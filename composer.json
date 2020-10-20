@@ -3,6 +3,7 @@
     "description": "Debug mode enabler - safe and clean way to manage Debug Mode in your app",
     "keywords": ["debug"],
     "license": ["MIT"],
+    "homepage": "https://github.com/redbitcz/php-debug-mode-enabler",
     "authors": [
         {
             "name": "Redbit s.r.o.",

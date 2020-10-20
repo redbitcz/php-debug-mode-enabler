@@ -25,12 +25,12 @@ class Detector
         return $this->enabler;
     }
 
-    public function isDebugMode(): bool
+    public function isDebugMode(?bool $default = false): bool
     {
         return $this->isDebugModeByEnabler()
             ?? $this->isDebugModeByEnv()
             ?? $this->isDebugModeByIp()
-            ?? false;
+            ?? $default;
     }
 
     /**
@@ -86,8 +86,8 @@ class Detector
         return $result ?: null;
     }
 
-    public static function detect(string $tempDir): bool
+    public static function detect(string $tempDir, ?bool $default = false): bool
     {
-        return (new self($tempDir))->isDebugMode();
+        return (new self($tempDir))->isDebugMode($default);
     }
 }

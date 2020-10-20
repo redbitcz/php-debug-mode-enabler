@@ -24,7 +24,7 @@ Package is requires PHP version at least 7.3 and temporary directory with writab
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:
 ```php
-$detector = new \Redbitcz\DebugMode\DebugModeDetector($tempDir);
+$detector = new \Redbitcz\DebugMode\Detector($tempDir);
 $debugMode = $detector->isDebugMode(); // boolean
 ```
 where `$tempDir` is required absolute path to temporary directory.
@@ -35,7 +35,7 @@ It returns `$debugMode` = `true` when is detected Debug environment or manually 
 In `\App\Bootstrap` class use package like this example:
 ```php
 $tempDir = __DIR__ . '/../temp';
-$debugModeDetector = new \Redbitcz\DebugMode\DebugModeDetector($tempDir);
+$debugModeDetector = new \Redbitcz\DebugMode\Detector($tempDir);
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -70,7 +70,7 @@ Enabler provide feature to force enable or disable Debug Mode anywhere for user'
 
 This example turn on Debug Mode for user's browser:
 ```php
-$enabler = new \Redbitcz\DebugMode\DebugModeEnabler($tempDir);
+$enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
 $enabler->activate(true);
 ```
 
@@ -83,7 +83,7 @@ $enabler->activate(true);
 Debug Mode Enabler (unlike Debug Mode Detector) can be simply served through DI Container with configuration in `config.neon`:
 ```yaml
 services:
-    - Redbitcz\DebugMode\DebugModeEnabler(%tempDir%)
+    - Redbitcz\DebugMode\Enabler(%tempDir%)
 ```
 
 At most cases this example is creates second instance of `DebugModeEnabler` class because first one is already created
@@ -92,7 +92,7 @@ internally with `DebugModeDetector` instance in `Bootstrap`.
 To re-use already exists instance you can inject it to DI Container:
 ```php
 $tempDir = __DIR__ . '/../temp';
-$debugModeDetector = new \Redbitcz\DebugMode\DebugModeDetector($tempDir);
+$debugModeDetector = new \Redbitcz\DebugMode\Detector($tempDir);
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -103,7 +103,7 @@ Don't forget let it know to DI Container with service declaration in `config.neo
 ```yaml
 services:
     debugModeEnabler:
-        type: Redbitcz\DebugMode\DebugModeEnabler
+        type: Redbitcz\DebugMode\Enabler
         imported: true
 ```  
 

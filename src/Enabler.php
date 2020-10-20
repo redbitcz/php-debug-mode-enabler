@@ -14,7 +14,7 @@ use Nette\Utils\Json;
 use Nette\Utils\JsonException;
 use Nette\Utils\Random;
 
-class DebugModeEnabler
+class Enabler
 {
     private const STORAGE_FILE = '/debug/token.bin';
     private const DEBUG_COOKIE_NAME = 'app-debug-token';

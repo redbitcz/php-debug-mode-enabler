@@ -8,19 +8,19 @@ declare(strict_types=1);
 
 namespace Redbitcz\DebugMode;
 
-class DebugModeDetector
+class Detector
 {
     private const DEBUG_ENV_NAME = 'APP_DEBUG';
 
-    /** @var DebugModeEnabler */
+    /** @var Enabler */
     private $enabler;
 
     public function __construct(string $tempDir)
     {
-        $this->enabler = new DebugModeEnabler($tempDir);
+        $this->enabler = new Enabler($tempDir);
     }
 
-    public function getEnabler(): DebugModeEnabler
+    public function getEnabler(): Enabler
     {
         return $this->enabler;
     }

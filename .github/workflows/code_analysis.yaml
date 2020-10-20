@@ -17,8 +17,13 @@ jobs:
           - name: PHPStan
             run: composer phpstan
 
+          - name: Easy Coding Standard
+            run: composer ecs
+
+
     name: ${{ matrix.actions.name }}
     runs-on: ubuntu-latest
+
 
     steps:
       - name: Checkout
@@ -38,6 +43,8 @@ jobs:
         id: composer-cache
         run: |
           echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+          
       - uses: actions/cache@v2
         with:
           path: |

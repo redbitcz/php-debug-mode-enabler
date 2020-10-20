@@ -15,7 +15,7 @@
         }
     ],
     "require": {
-        "php": ">=7.3",
+        "php": ">=7.3.4",
         "nette/utils": "^3.0"
     },
     "autoload": {

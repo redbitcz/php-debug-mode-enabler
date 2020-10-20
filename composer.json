@@ -31,9 +31,12 @@
         }
     },
     "require-dev": {
-        "phpstan/phpstan": "^0.12.50"
+        "phpstan/phpstan": "^0.12.50",
+        "symplify/easy-coding-standard": "^8.3"
     },
     "scripts": {
-        "phpstan": "phpstan analyze src --level 8"
+        "phpstan": "phpstan analyze src --level 8",
+        "ecs": "ecs check src --set psr12",
+        "ecs-fix": "ecs check src --set psr12 --fix"
     }
 }

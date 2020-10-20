@@ -1,17 +1,17 @@
 {
     "name": "redbitcz/debug-mode-enabler",
-    "description": "Debug mode enabler - safe and clean way to manage Debug Mode in your app",
+    "description": "Debug mode enabler - safe and clean way to manage Debug Mode in your App",
     "keywords": ["debug"],
     "license": ["MIT"],
     "homepage": "https://github.com/redbitcz/php-debug-mode-enabler",
     "authors": [
         {
             "name": "Redbit s.r.o.",
-            "homepage": "https://www.redbit.cz"
+            "homepage": "https://www.redbit.cz/"
         },
         {
             "name": "Jakub Bouček",
-            "homepage": "https://www.jakub-boucek.cz"
+            "homepage": "https://www.jakub-boucek.cz/"
         }
     ],
     "require": {

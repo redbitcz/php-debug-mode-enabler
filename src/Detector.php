@@ -85,4 +85,9 @@ class Detector
 
         return $result ?: null;
     }
+
+    public static function detect(string $tempDir): bool
+    {
+        return (new self($tempDir))->isDebugMode();
+    }
 }

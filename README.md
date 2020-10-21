@@ -1,38 +1,44 @@
 PHP Debug Mode Enabler
 ======================
-> not only for Tracy debugger
 
-Safe and clean way to manage Debug Mode in your app by specific environment and/or manually in app.
-Package provide secure way to temporary switch Debug Mode of your App at any environment.
+Safe and clean way to manage Debug Mode in your app by specific environment and/or manually in App.
+Package automatically detects development environments and provide secure way to temporary switch Debug Mode of your App
+at any environment.
 
 ## Features
 Package allows your app to switch to Debug Mode: 
 - automatically on localhost's environment by IP,
 - semi-automatically on any environment where you set `APP_DEBUG` environment variable (useful for Docker dev-stack), 
-- allows you to switch (force turn-on or turn-off) Debug Mode manually.
+- semi-automatically disable Debug mode on any environment where you set `app-debug-mode` cookie variable (useful for
+tests and similar cases), 
+- manually enable/disable (force turn-on or turn-off) Debug Mode.
 
-> NOTE: Package is NOT provide any Debug tools directly – it only gives the app whether to switch to debug mode.
+**NOTE:** Package is NOT provide any Debug tools directly – it only gives the app whether to switch to debug mode.
+
+Package is optimized for invoking in very early lifecycle phase of your App and   
+
+## Requirements
+Package is requires:
+
+- PHP version at least 7.3
+- Temporary directory with writable access 
 
 ## Installation
 ```shell
 composer require redbitcz/debug-mode-enabler
 ```
 
-## Requirements
-Package is requires PHP version at least 7.3 and temporary directory with writable access. 
-
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:
 ```php
-$detector = new \Redbitcz\DebugMode\Detector($tempDir);
-$debugMode = $detector->isDebugMode(); // boolean
+$debugMode = \Redbitcz\DebugMode\Detector::detect($tempDir); //bool
 ```
-where `$tempDir` is required absolute path to temporary directory.
+where `$tempDir` is required path to temporary directory.
 
 It returns `$debugMode` = `true` when is detected Debug environment or manually switched.
 
 ### Using with Nette
-In `\App\Bootstrap` class use package like this example:
+In Boostrap use package like this example:
 ```php
 $tempDir = __DIR__ . '/../temp';
 $debugModeDetector = new \Redbitcz\DebugMode\Detector($tempDir);
@@ -58,10 +64,6 @@ environment:
 ```
 
 ## Manually switch
-<p align="center">
-  <img width="368" height="280" src="https://user-images.githubusercontent.com/1657322/78752208-f2354a00-7973-11ea-83ea-b2719e326dc8.png">
-</p>
-
 **WARNING – DANGER ZONE:** Following feature allows to force Debug Mode on any environment, production including.
 Please use it with great caution only! Wrong use might cause to critical security issue! Before using Enabler's feature be
 aware your app is resistant to XSS, CSRF and similar attacks!  
@@ -86,8 +88,8 @@ services:
     - Redbitcz\DebugMode\Enabler(%tempDir%)
 ```
 
-At most cases this example is creates second instance of `DebugModeEnabler` class because first one is already created
-internally with `DebugModeDetector` instance in `Bootstrap`.
+At most cases this example is creates second instance of `Enabler` class because first one is already created
+internally with `Detector` instance in `Bootstrap`.
 
 To re-use already exists instance you can inject it to DI Container:
 ```php
@@ -108,24 +110,4 @@ services:
 ```  
 
 ## License
-The MIT License (MIT)
-
-Copyright (c) 2020 Redbit s.r.o., Jakub Bouček
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The MIT License (MIT). Please see [License File](LICENSE) for more information.

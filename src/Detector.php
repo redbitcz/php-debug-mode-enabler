@@ -11,6 +11,8 @@ namespace Redbitcz\DebugMode;
 class Detector
 {
     private const DEBUG_ENV_NAME = 'APP_DEBUG';
+    private const DEBUG_COOKIE_NAME = 'app-debug-mode';
+
 
     /** @var Enabler */
     private $enabler;
@@ -28,6 +30,7 @@ class Detector
     public function isDebugMode(?bool $default = false): ?bool
     {
         return $this->isDebugModeByEnabler()
+            ?? $this->isDebugModeByCookie()
             ?? $this->isDebugModeByEnv()
             ?? $this->isDebugModeByIp()
             ?? $default;
@@ -36,14 +39,37 @@ class Detector
     /**
      * Detect debug state by DobugModeEnabler helper
      * Returned value:
-     *      - false (force to turn-off debug mode)
-     *      - true (force to turn-on debug mode)
-     *      - null (enabler is not activated)
+     *   - `false` (force to turn-off debug mode)
+     *   - `true` (force to turn-on debug mode)
+     *   - `null` (enabler is not activated)
+     *
      * @return bool|null
      */
     public function isDebugModeByEnabler(): ?bool
     {
         return $this->enabler->isDebug();
+    }
+
+    /**
+     * Detect disabling debug mode by Cookie: `app-debug-mode: 0`
+     *
+     * ENV value vs. returned value:
+     *   - `0`: `false` (force to turn-off debug mode)
+     *   - `undefined` or any other value (includes `1`): `null`
+     *
+     * Note: This cookie allows only turn-off Debug mode.
+     * Using cookie to turn-on debug mode is unsecure!
+     *
+     * @return bool|null
+     */
+    public function isDebugModeByCookie(): ?bool
+    {
+        $cookieValue = $_COOKIE[self::DEBUG_COOKIE_NAME] ?? null;
+        if (is_numeric($cookieValue) && (int)$cookieValue === 0) {
+            return false;
+        }
+
+        return null;
     }
 
     /**

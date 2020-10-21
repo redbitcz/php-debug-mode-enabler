@@ -79,7 +79,7 @@ $enabler->activate(true);
 ### Options
 - `$enabler->activate(true)` - force to Debug Mode turn on,
 - `$enabler->activate(false)` - force to Debug Mode turn off,
-- `$enabler->deactivate(false)` - reset back to automatically detection by environment.
+- `$enabler->deactivate()` - reset back to automatically detection by environment.
 
 ### Using with Nette
 Debug Mode Enabler (unlike Debug Mode Detector) can be simply served through DI Container with configuration in `config.neon`:

@@ -75,9 +75,10 @@ class Detector
     /**
      * Detect debug state by ENV parameter
      * ENV value vs. returned value:
-     *      - 0: false (force to turn-off debug mode)
-     *      - 1: true (force to turn-on debug mode)
-     *      - undefined or any other value: null
+     *   - `0`: `false` (force to turn-off debug mode)
+     *   - `1`: `true` (force to turn-on debug mode)
+     *   - `undefined` or any other value: `null`
+     *
      * @return bool|null
      */
     public function isDebugModeByEnv(): ?bool
@@ -93,8 +94,9 @@ class Detector
     /**
      * Detect debug state by locahost IP
      * Returned value:
-     *      - is localhost: true (force to turn-on debug mode)
-     *      - otherwise: null
+     *   - is localhost: `true` (force to turn-on debug mode)
+     *   - otherwise: `null`
+     *
      * @return bool|null
      */
     public function isDebugModeByIp(): ?bool

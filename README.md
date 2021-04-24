@@ -13,7 +13,7 @@ Package allows your app to switch to Debug Mode:
 tests and similar cases),
 - manually enable/disable (force turn-on or turn-off) Debug Mode.
 
-**NOTE:** Package doesn't NOT provide any Debug tools directly – it only tells the app whether to switch to debug mode.
+**NOTE:** Package does NOT provide any Debug tools directly – it only tells the app whether to switch to debug mode.
 
 Package is optimized for invoking in very early lifecycle phase of your App
 

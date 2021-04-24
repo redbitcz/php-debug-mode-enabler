@@ -13,13 +13,21 @@ class Detector
     private const DEBUG_ENV_NAME = 'APP_DEBUG';
     private const DEBUG_COOKIE_NAME = 'app-debug-mode';
 
+    public const MODE_ENABLER = 0b0001;
+    public const MODE_COOKIE = 0b0010;
+    public const MODE_ENV = 0b0100;
+    public const MODE_IP = 0b1000;
+    public const MODE_ALL = self::MODE_ENABLER | self::MODE_COOKIE | self::MODE_ENV | self::MODE_IP;
 
     /** @var Enabler */
     private $enabler;
+    /** @var int */
+    private $mode;
 
-    public function __construct(string $tempDir)
+    public function __construct(string $tempDir, int $mode = self::MODE_ALL)
     {
         $this->enabler = new Enabler($tempDir);
+        $this->mode = $mode;
     }
 
     public function getEnabler(): Enabler
@@ -29,10 +37,10 @@ class Detector
 
     public function isDebugMode(?bool $default = false): ?bool
     {
-        return $this->isDebugModeByEnabler()
-            ?? $this->isDebugModeByCookie()
-            ?? $this->isDebugModeByEnv()
-            ?? $this->isDebugModeByIp()
+        return ($this->mode & self::MODE_ENABLER ? $this->isDebugModeByEnabler() : null)
+            ?? ($this->mode & self::MODE_COOKIE ? $this->isDebugModeByCookie() : null)
+            ?? ($this->mode & self::MODE_ENV ? $this->isDebugModeByEnv() : null)
+            ?? ($this->mode & self::MODE_IP ? $this->isDebugModeByIp() : null)
             ?? $default;
     }
 
@@ -114,8 +122,8 @@ class Detector
         return $result ?: null;
     }
 
-    public static function detect(string $tempDir, ?bool $default = false): ?bool
+    public static function detect(string $tempDir, int $mode = self::MODE_ALL, ?bool $default = false): ?bool
     {
-        return (new self($tempDir))->isDebugMode($default);
+        return (new self($tempDir, $mode))->isDebugMode($default);
     }
 }

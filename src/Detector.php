@@ -118,4 +118,9 @@ class Detector
     {
         return (new self($tempDir))->isDebugMode($default);
     }
+
+    public static function detectProductionMode(string $tempDir, ?bool $default = false): ?bool
+    {
+        return self::detect($tempDir, $default) === false;
+    }
 }

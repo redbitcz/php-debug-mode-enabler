@@ -17,9 +17,6 @@ jobs:
           - name: PHPStan
             run: composer phpstan
 
-          - name: Easy Coding Standard
-            run: composer ecs
-
           - name: Nette Tester
             run: composer tester
 

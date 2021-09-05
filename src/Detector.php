@@ -19,7 +19,6 @@ class Detector
     /** Name of Cookie used to detect Debug mode */
     public const DEBUG_COOKIE_NAME = 'app-debug-mode';
 
-
     /** Enables Debug mode detection by client IP */
     public const MODE_IP = 0b0001;
 
@@ -36,7 +35,7 @@ class Detector
     public const MODE_SIMPLE = self::MODE_COOKIE | self::MODE_ENV | self::MODE_IP;
 
     /** Full mode with Enabler  */
-    public const MODE_ALL = self::MODE_ENABLER | self::MODE_SIMPLE;
+    public const MODE_FULL = self::MODE_ENABLER | self::MODE_SIMPLE;
 
 
     /** @var Enabler|null */
@@ -145,18 +144,19 @@ class Detector
         $addr = $_SERVER['REMOTE_ADDR'] ?? php_uname('n');
 
         // Security check: Prevent false-positive match behind reverse proxy
-        $result = isset($_SERVER['HTTP_X_FORWARDED_FOR']) === false
-            && isset($_SERVER['HTTP_FORWARDED']) === false
-            && isset($_SERVER['HTTP_X_REAL_IP']) === false
-            && in_array($addr, $this->ips, true);
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+            || isset($_SERVER['HTTP_FORWARDED'])
+            || isset($_SERVER['HTTP_X_REAL_IP'])) {
+            return false;
+        }
 
-        return $result ?: null;
+        return in_array($addr, $this->ips, true) ?: null;
     }
 
     /**
      * Set client IP address with allowed Debug mode
      */
-    public function allowIp(string ...$ips): self
+    public function setAllowedIp(string ...$ips): self
     {
         $this->ips = $ips;
         return $this;
@@ -167,8 +167,7 @@ class Detector
      */
     public function addAllowedIp(string ...$ips): self
     {
-        /** @noinspection AdditionOperationOnArraysInspection */
-        $this->ips += $ips;
+        $this->ips = array_merge($this->ips, $ips);
         return $this;
     }
 

@@ -4,8 +4,8 @@ namespace PHPSTORM_META {
 
     expectedArguments(
         \Redbitcz\DebugMode\Detector::__construct(),
-        1,
-        \Redbitcz\DebugMode\Detector::MODE_ALL,
+        0,
+        \Redbitcz\DebugMode\Detector::MODE_FULL,
         \Redbitcz\DebugMode\Detector::MODE_SIMPLE,
         \Redbitcz\DebugMode\Detector::MODE_ENABLER,
         \Redbitcz\DebugMode\Detector::MODE_COOKIE,
@@ -15,8 +15,8 @@ namespace PHPSTORM_META {
 
     expectedArguments(
         \Redbitcz\DebugMode\Detector::detect(),
-        1,
-        \Redbitcz\DebugMode\Detector::MODE_ALL,
+        0,
+        \Redbitcz\DebugMode\Detector::MODE_FULL,
         \Redbitcz\DebugMode\Detector::MODE_SIMPLE,
         \Redbitcz\DebugMode\Detector::MODE_ENABLER,
         \Redbitcz\DebugMode\Detector::MODE_COOKIE,
@@ -26,8 +26,8 @@ namespace PHPSTORM_META {
 
     expectedArguments(
         \Redbitcz\DebugMode\Detector::detectProductionMode(),
-        1,
-        \Redbitcz\DebugMode\Detector::MODE_ALL,
+        0,
+        \Redbitcz\DebugMode\Detector::MODE_FULL,
         \Redbitcz\DebugMode\Detector::MODE_SIMPLE,
         \Redbitcz\DebugMode\Detector::MODE_ENABLER,
         \Redbitcz\DebugMode\Detector::MODE_COOKIE,

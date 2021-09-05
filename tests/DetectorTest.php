@@ -5,19 +5,16 @@ declare(strict_types=1);
 namespace Redbitcz\DebugModeTests;
 
 use Redbitcz\DebugMode\Detector;
+use Redbitcz\DebugMode\Enabler;
 use Tester\Assert;
 use Tester\Helpers;
 use Tester\TestCase;
 
 require __DIR__ . '/bootstrap.php';
 
-/**
- * @testCase
- */
+/** @testCase */
 class DetectorTest extends TestCase
 {
-    private const DEBUG_ENV_NAME = 'APP_DEBUG';
-    private const DEBUG_COOKIE_NAME = 'app-debug-mode';
     private const TEMP_DIR = __DIR__ . '/temp/enabler';
 
     protected function setUp(): void
@@ -47,9 +44,9 @@ class DetectorTest extends TestCase
      */
     public function testEnv($testValue, $expected): void
     {
-        putenv(sprintf('%s%s%s', self::DEBUG_ENV_NAME, $testValue === null ? '' : '=', $testValue));
+        putenv(sprintf('%s%s%s', Detector::DEBUG_ENV_NAME, $testValue === null ? '' : '=', $testValue));
 
-        $detector = new Detector(self::TEMP_DIR);
+        $detector = new Detector();
         Assert::equal($expected, $detector->isDebugModeByEnv());
     }
 
@@ -77,10 +74,10 @@ class DetectorTest extends TestCase
     public function testCookie($testValue, $expected): void
     {
         if ($testValue !== null) {
-            $_COOKIE[self::DEBUG_COOKIE_NAME] = $testValue;
+            $_COOKIE[Detector::DEBUG_COOKIE_NAME] = $testValue;
         }
 
-        $detector = new Detector(self::TEMP_DIR);
+        $detector = new Detector();
         Assert::equal($expected, $detector->isDebugModeByCookie());
     }
 
@@ -89,7 +86,7 @@ class DetectorTest extends TestCase
         return [
             //  [null, null], // unable to test null, because then detector try load ip from `php_uname('n')`
             ['127.0.0.1', true],
-            ['127.0.0.254', true],
+            ['127.0.0.254', null],
             ['127.0.1.0', null],
             ['192.168.1.1', null],
             ['::1', true],
@@ -104,11 +101,72 @@ class DetectorTest extends TestCase
      */
     public function testIp($testValue, $expected): void
     {
+        unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_FORWARDED'], $_SERVER['HTTP_X_REAL_IP']);
+        $_SERVER['REMOTE_ADDR'] = $testValue;
+
+
+        $detector = new Detector();
+        Assert::equal($expected, $detector->isDebugModeByIp());
+    }
+
+    public function getSettedIpDataProvider(): array
+    {
+        return [
+            [['127.0.0.1'], '127.0.0.1', true],
+            [['127.0.0.2'], '127.0.0.1', null],
+            [['127.0.0.1'], '127.0.0.254', null],
+            [['127.0.0.1', '127.0.1.0'], '127.0.1.0', true],
+            [['127.0.0.1'], '127.0.1.0', null],
+            [['127.0.0.1'], '192.168.1.1', null],
+            [['127.0.0.1'], '::1', null],
+            [['127.0.0.1', '2600:1005:b062:61e4:74d7:f292:802c:fbfd'], '2600:1005:b062:61e4:74d7:f292:802c:fbfd', true],
+            [['127.0.0.1'], '2600:1005:b062:61e4:74d7:f292:802c:fbfd', null],
+        ];
+    }
+
+    /**
+     * @dataProvider getSettedIpDataProvider
+     * @param $testValue
+     * @param $expected
+     */
+    public function testSettedIp(array $setIp, $testValue, $expected): void
+    {
         unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_FORWARDED']);
         $_SERVER['REMOTE_ADDR'] = $testValue;
 
 
-        $detector = new Detector(self::TEMP_DIR);
+        $detector = new Detector();
+        $detector->setAllowedIp(...$setIp);
+        Assert::equal($expected, $detector->isDebugModeByIp());
+    }
+
+    public function getAddedIpDataProvider(): array
+    {
+        return [
+            [['10.0.0.1'], '127.0.0.1', true],
+            [['10.0.0.1'], '127.0.0.254', null],
+            [['10.0.0.1'], '127.0.1.0', null],
+            [['10.0.0.1'], '192.168.1.1', null],
+            [['10.0.0.1'], '::1', true],
+            [['10.0.0.1'], '2600:1005:b062:61e4:74d7:f292:802c:fbfd', null],
+            [['10.0.0.1'], '10.0.0.1', true],
+            [['10.0.0.1', '10.0.0.2'], '10.0.0.2', true],
+        ];
+    }
+
+    /**
+     * @dataProvider getAddedIpDataProvider
+     * @param $testValue
+     * @param $expected
+     */
+    public function testAddedIp(array $setIp, $testValue, $expected): void
+    {
+        unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_FORWARDED']);
+        $_SERVER['REMOTE_ADDR'] = $testValue;
+
+
+        $detector = new Detector();
+        $detector->addAllowedIp(...$setIp);
         Assert::equal($expected, $detector->isDebugModeByIp());
     }
 
@@ -127,7 +185,7 @@ class DetectorTest extends TestCase
      */
     public function testEnabler($testValue): void
     {
-        $detector = new Detector(self::TEMP_DIR);
+        $detector = new Detector(Detector::MODE_FULL, new Enabler(self::TEMP_DIR));
         $detector->getEnabler()->override($testValue);
         Assert::equal($testValue, $detector->isDebugModeByEnabler());
     }

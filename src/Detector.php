@@ -35,12 +35,10 @@ class Detector
     public const MODE_FULL = self::MODE_ENABLER | self::MODE_SIMPLE;
 
 
-    /** @var Enabler|null */
-    private $enabler;
-    /** @var int */
-    private $mode;
+    private ?Enabler $enabler;
+    private int $mode;
     /** @var string[] */
-    private $ips = ['::1', '127.0.0.1'];
+    private array $ips = ['::1', '127.0.0.1'];
 
     /**
      * @param int $mode Enables methods which is used to detect Debug mode
@@ -49,7 +47,7 @@ class Detector
     public function __construct(int $mode = self::MODE_SIMPLE, ?Enabler $enabler = null)
     {
         if ($enabler === null && $mode & self::MODE_ENABLER) {
-            throw new MissingEnablerException(
+            throw new InconsistentEnablerModeException(
                 'Enabler mode (and Full mode) requires the Enabler instance in constructor'
             );
         }
@@ -61,7 +59,7 @@ class Detector
     public function getEnabler(): Enabler
     {
         if ($this->enabler === null) {
-            throw new MissingEnablerException('Unable to get Enabler because Detector constructed without it');
+            throw new InconsistentEnablerModeException('Unable to get Enabler because Detector constructed without it');
         }
 
         return $this->enabler;
@@ -183,7 +181,7 @@ class Detector
         ?bool $default = false
     ): ?bool {
         if ($tempDir === null && $mode & self::MODE_ENABLER) {
-            throw new MissingEnablerException('Enabler mode requires \'tempDir\' argument');
+            throw new InconsistentEnablerModeException('Enabler mode (and Full mode) requires \'tempDir\' argument');
         }
 
         $enabler = $tempDir === null ? null : new Enabler($tempDir);

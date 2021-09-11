@@ -6,7 +6,7 @@ namespace Redbitcz\DebugModeTests;
 
 use Redbitcz\DebugMode\Detector;
 use Redbitcz\DebugMode\Enabler;
-use Redbitcz\DebugMode\MissingEnablerException;
+use Redbitcz\DebugMode\InconsistentEnablerModeException;
 use Tester\Assert;
 use Tester\Helpers;
 use Tester\TestCase;
@@ -195,7 +195,7 @@ class DetectorTest extends TestCase
     {
         Assert::exception(function () {
             $detector = new Detector(Detector::MODE_FULL);
-        }, MissingEnablerException::class);
+        }, InconsistentEnablerModeException::class);
     }
 
     public function testMissingEnabler(): void
@@ -203,14 +203,14 @@ class DetectorTest extends TestCase
         Assert::exception(function () {
             $detector = new Detector(Detector::MODE_SIMPLE);
             $detector->getEnabler();
-        }, MissingEnablerException::class);
+        }, InconsistentEnablerModeException::class);
     }
 
     public function testMissingEnablerShortcut(): void
     {
         Assert::exception(function () {
             Detector::detect(Detector::MODE_FULL);
-        }, MissingEnablerException::class);
+        }, InconsistentEnablerModeException::class);
     }
 }
 

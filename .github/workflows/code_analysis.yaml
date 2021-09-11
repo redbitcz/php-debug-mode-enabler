@@ -20,9 +20,9 @@ jobs:
           - name: Nette Tester
             run: composer tester
         php:
-          - 7.3
-          - 7.4
-          - 8.0
+          - "7.4"
+          - "8.0"
+          - "8.1"
 
     name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
           restore-keys: |
             ${{ runner.os }}-composer-data-
 
@@ -61,7 +61,7 @@ jobs:
         with:
           path: |
             **/composer.lock
-          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
 
 
       - name: Install Composer

@@ -49,7 +49,9 @@ class Detector
     public function __construct(int $mode = self::MODE_SIMPLE, ?Enabler $enabler = null)
     {
         if ($enabler === null && $mode & self::MODE_ENABLER) {
-            throw new MissingEnablerException('Enabler mode requires the Enabler instance in constructor');
+            throw new MissingEnablerException(
+                'Enabler mode (and Full mode) requires the Enabler instance in constructor'
+            );
         }
 
         $this->enabler = $enabler;

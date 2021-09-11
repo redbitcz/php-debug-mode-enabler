@@ -9,7 +9,7 @@ at any environment.
 Package allows your app to switch to Debug Mode:
 - automatically on localhost's environment by IP,
 - semi-automatically on any environment where you set `APP_DEBUG` environment variable (useful for Docker dev-stack),
-- semi-automatically disable Debug mode on any environment where you set `app-debug-mode` cookie variable (useful for
+- semi-automatically **disable** Debug mode on any environment where you set `app-debug-mode` cookie variable (useful for
 tests and similar cases),
 - manually enable/disable (force turn-on or turn-off) Debug Mode.
 
@@ -20,7 +20,10 @@ Package is optimized for invoking in very early lifecycle phase of your App
 ## Requirements
 Package requires:
 
-- PHP version at least 7.3
+- PHP version at least 7.4
+
+Enabler requires:
+ 
 - Temporary directory with writable access
 
 ## Installation
@@ -31,17 +34,15 @@ composer require redbitcz/debug-mode-enabler
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:
 ```php
-$debugMode = \Redbitcz\DebugMode\Detector::detect($tempDir); //bool
+$debugMode = \Redbitcz\DebugMode\Detector::detect(); //bool
 ```
-where `$tempDir` is required path to temporary directory.
 
 It returns `$debugMode` = `true` when it detects Debug environment or manually switched.
 
 ### Using with Nette
 In Boostrap use package like in this example:
 ```php
-$tempDir = __DIR__ . '/../temp';
-$debugModeDetector = new \Redbitcz\DebugMode\Detector($tempDir);
+$debugModeDetector = new \Redbitcz\DebugMode\Detector();
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -72,6 +73,9 @@ Enabler provide feature to force enable or disable Debug Mode anywhere for user'
 This example turn on Debug Mode for user's browser:
 ```php
 $enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
+
+$detector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::MODE_FULL, $enabler);
+
 $enabler->activate(true);
 ```
 
@@ -93,7 +97,8 @@ internally with `Detector` instance in `Bootstrap`.
 To re-use already existing instance you can inject it to DI Container:
 ```php
 $tempDir = __DIR__ . '/../temp';
-$debugModeDetector = new \Redbitcz\DebugMode\Detector($tempDir);
+$enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
+$debugModeDetector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::MODE_FULL, $enabler);
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());

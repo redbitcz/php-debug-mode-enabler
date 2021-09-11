@@ -24,7 +24,7 @@ jobs:
           - 7.4
           - 8.0
 
-    name: ${{ matrix.actions.name }}
+    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
 
 

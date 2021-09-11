@@ -24,7 +24,7 @@ class Enabler
     private const DEFAULT_TTL = '1 hour';
 
     private string $tempDir;
-    private ?bool $override;
+    private ?bool $override = null;
 
     /** @var array<string, string|bool> */
     private array $cookieOptions = [

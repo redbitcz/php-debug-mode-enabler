@@ -6,6 +6,7 @@ namespace Redbitcz\DebugModeTests;
 
 use Redbitcz\DebugMode\Detector;
 use Redbitcz\DebugMode\Enabler;
+use Redbitcz\DebugMode\MissingEnablerException;
 use Tester\Assert;
 use Tester\Helpers;
 use Tester\TestCase;
@@ -188,6 +189,28 @@ class DetectorTest extends TestCase
         $detector = new Detector(Detector::MODE_FULL, new Enabler(self::TEMP_DIR));
         $detector->getEnabler()->override($testValue);
         Assert::equal($testValue, $detector->isDebugModeByEnabler());
+    }
+
+    public function testMissingEnablerMode(): void
+    {
+        Assert::exception(function () {
+            $detector = new Detector(Detector::MODE_FULL);
+        }, MissingEnablerException::class);
+    }
+
+    public function testMissingEnabler(): void
+    {
+        Assert::exception(function () {
+            $detector = new Detector(Detector::MODE_SIMPLE);
+            $detector->getEnabler();
+        }, MissingEnablerException::class);
+    }
+
+    public function testMissingEnablerShortcut(): void
+    {
+        Assert::exception(function () {
+            Detector::detect(Detector::MODE_FULL);
+        }, MissingEnablerException::class);
     }
 }
 

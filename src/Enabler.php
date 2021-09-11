@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Redbitcz\DebugMode;
 
 use Nette\IOException;
+use Nette\Utils\DateTime as NetteDateTime;
 use Nette\Utils\FileSystem;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
@@ -20,40 +21,63 @@ class Enabler
     private const DEBUG_COOKIE_NAME = 'app-debug-token';
     private const TOKEN_LENGTH = 30;
     private const ID_LENGTH = 15;
-    private const TTL = 3600;
-    // TODO: Make configurable TLS requirements
-    private const REQUIRE_HTTPS = false;
+    private const DEFAULT_TTL = '1 hour';
 
-    /** @var string */
-    private $tempDir;
+    private string $tempDir;
+    private ?bool $override;
 
-    /** @var bool|null */
-    private $override;
+    /** @var array<string, string|bool> */
+    private array $cookieOptions = [
+        'path' => '/',
+        'domain' => '',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ];
 
     public function __construct(string $tempDir)
     {
         $this->tempDir = $tempDir;
     }
 
-    public function activate(bool $isDebug): void
+    /** @return static */
+    public function setSecure(bool $secure = true): self
+    {
+        $this->cookieOptions['secure'] = $secure;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     * @see setcookie()
+     */
+    public function setCookieOptions(
+        ?string $path = null,
+        ?string $domain = null,
+        ?bool $secure = null,
+        ?bool $httponly = null,
+        ?string $samesite = null
+    ): self {
+        $this->cookieOptions = [
+            'path' => $path ?? $this->cookieOptions['path'],
+            'domain' => $domain ?? $this->cookieOptions['domain'],
+            'secure' => $secure ?? $this->cookieOptions['secure'],
+            'httponly' => $httponly ?? $this->cookieOptions['httponly'],
+            'samesite' => $samesite ?? $this->cookieOptions['samesite'],
+        ];
+        return $this;
+    }
+
+    public function activate(bool $isDebug, ?string $time = self::DEFAULT_TTL): void
     {
         if ($tokenName = $this->getTokenName()) {
             $this->destroyToken($tokenName);
         }
 
-        $tokenName = $this->createToken($isDebug);
-        setcookie(
-            self::DEBUG_COOKIE_NAME,
-            $tokenName,
-            [
-                'expires' => time() + self::TTL,
-                'path' => '/',
-                'domain' => '',
-                'secure' => self::REQUIRE_HTTPS,
-                'httponly' => true,
-                'samesite' => 'Strict',
-            ]
-        );
+        $tokenExpires = (int)NetteDateTime::from($time ?? self::DEFAULT_TTL)->format('U');
+        $cookieExpires = $time === null ? 0 : $tokenExpires;
+        $tokenName = $this->createToken($isDebug, $tokenExpires);
+        setcookie(self::DEBUG_COOKIE_NAME, $tokenName, ['expires' => $cookieExpires] + $this->cookieOptions);
 
         $this->override = $isDebug;
     }
@@ -65,19 +89,7 @@ class Enabler
             $this->destroyToken($tokenName);
         }
 
-        setcookie(
-            self::DEBUG_COOKIE_NAME,
-            '',
-            [
-                'expires' => 0,
-                'path' => '/',
-                'domain' => '',
-                'secure' => self::REQUIRE_HTTPS,
-                'httponly' => true,
-                'samesite' => 'Strict',
-            ]
-        );
-
+        setcookie(self::DEBUG_COOKIE_NAME, '', ['expires' => time()] + $this->cookieOptions);
         $this->override = null;
     }
 
@@ -117,10 +129,10 @@ class Enabler
         return $this->getListTokenValue($name, $list);
     }
 
-    private function createToken(bool $value): string
+    private function createToken(bool $value, int $expires): string
     {
         $list = $this->loadList();
-        $name = $this->addListToken($value, $list);
+        $name = $this->addListToken($value, $expires, $list);
         $this->saveList($list);
 
         return $name;
@@ -144,22 +156,18 @@ class Enabler
     }
 
     /**
-     * @param bool $value
      * @param array<int, array> $list
-     * @return string
      */
-    private function addListToken(bool $value, array &$list): string
+    private function addListToken(bool $value, int $expires, array &$list): string
     {
         /** @var string $name */
-        [$name, $token] = $this->generateToken($value);
+        [$name, $token] = $this->generateToken($value, $expires);
         $list[] = $token;
         return $name;
     }
 
     /**
-     * @param string $name
      * @param array<int, array> $list
-     * @return bool|null
      */
     private function getListTokenValue(string $name, array $list): ?bool
     {
@@ -175,7 +183,6 @@ class Enabler
 
 
     /**
-     * @param string $name
      * @param array<int, array> $list
      */
     private function dropListToken(string $name, array &$list): void
@@ -209,8 +216,6 @@ class Enabler
 
     /**
      * @param array<string, string|bool|int> $token
-     * @param string|null $name
-     * @return bool
      */
     private function isTokenValid(array $token, ?string $name = null): bool
     {
@@ -233,16 +238,15 @@ class Enabler
     }
 
     /**
-     * @param bool $value
      * @return array<int, string|array>
      */
-    private function generateToken(bool $value): array
+    private function generateToken(bool $value, int $expires): array
     {
         $name = $this->generateTokenName();
         $token = [
             'id' => $this->getIdByName($name),
             'hash' => $this->getHashByName($name),
-            'expire' => time() + self::TTL,
+            'expire' => $expires,
             'value' => $value
         ];
 

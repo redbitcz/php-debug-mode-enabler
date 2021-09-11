@@ -41,7 +41,7 @@
         "nette/tester": "^2.4"
     },
     "scripts": {
-        "phpstan": "phpstan analyze src --level 8",
+        "phpstan": "phpstan analyze src -c phpstan.neon --level 8",
         "tester": "tester tests"
     }
 }

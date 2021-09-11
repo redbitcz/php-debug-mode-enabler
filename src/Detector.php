@@ -8,9 +8,6 @@ declare(strict_types=1);
 
 namespace Redbitcz\DebugMode;
 
-use InvalidArgumentException;
-use LogicException;
-
 class Detector
 {
     /** Name of Environment variable used to detect Debug mode */
@@ -52,7 +49,7 @@ class Detector
     public function __construct(int $mode = self::MODE_SIMPLE, ?Enabler $enabler = null)
     {
         if ($enabler === null && $mode & self::MODE_ENABLER) {
-            throw new InvalidArgumentException('Enabler mode requires Enabler instance in constructor');
+            throw new MissingEnablerException('Enabler mode requires the Enabler instance in constructor');
         }
 
         $this->enabler = $enabler;
@@ -62,7 +59,7 @@ class Detector
     public function getEnabler(): Enabler
     {
         if ($this->enabler === null) {
-            throw new LogicException('Detector constructed without Enabler');
+            throw new MissingEnablerException('Unable to get Enabler because Detector constructed without it');
         }
 
         return $this->enabler;
@@ -184,7 +181,7 @@ class Detector
         ?bool $default = false
     ): ?bool {
         if ($tempDir === null && $mode & self::MODE_ENABLER) {
-            throw new InvalidArgumentException('Enabler mode requires `tempDir` argument');
+            throw new MissingEnablerException('Enabler mode requires \'tempDir\' argument');
         }
 
         $enabler = $tempDir === null ? null : new Enabler($tempDir);

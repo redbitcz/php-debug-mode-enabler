@@ -190,11 +190,7 @@ class SignedUrl implements Plugin
             }
 
             $canonicalUrl = $this->buildUrl(['query' => substr($query, 0, $remainingOffset)] + $url);
-            header('Cache-Control: s-maxage=0, max-age=0, must-revalidate', true, 302);
-            header('Expires: Mon, 23 Jan 1978 10:00:00 GMT', true);
-            header('Location: ' . $canonicalUrl);
-            $escapedUrl = htmlspecialchars($canonicalUrl, ENT_IGNORE | ENT_QUOTES, 'UTF-8');
-            echo "<h1>Redirect</h1>\n\n<p><a href=\"{$escapedUrl}\">Please click here to continue</a>.</p>";
+            $this->sendRedirectResponse($canonicalUrl);
         }
 
         $signedUrl = $this->buildUrl(['query' => substr($query, 0, $tokenOffset)] + $url);
@@ -221,7 +217,6 @@ class SignedUrl implements Plugin
         // Check mandatory claims presence
         if (isset(
                 $payload->iss,
-                $payload->aud,
                 $payload->iat,
                 $payload->exp,
                 $payload->sub,
@@ -235,7 +230,7 @@ class SignedUrl implements Plugin
         // Check mandatory claims
         if (
             $payload->iss !== self::ISSUER_ID
-            || $payload->aud !== $this->audience
+            || ($payload->aud ?? null) !== $this->audience
         ) {
             throw new SignedUrlVerificationException('JWT Token mandatory Claims doesn\'t match');
         }
@@ -263,7 +258,7 @@ class SignedUrl implements Plugin
     /**
      * @param ParsedUrl $parsedUrl
      */
-    private function buildUrl(array $parsedUrl): string
+    protected function buildUrl(array $parsedUrl): string
     {
         return (isset($parsedUrl['scheme']) ? "{$parsedUrl['scheme']}:" : '')
             . ((isset($parsedUrl['user']) || isset($parsedUrl['host'])) ? '//' : '')
@@ -277,7 +272,7 @@ class SignedUrl implements Plugin
             . (isset($parsedUrl['fragment']) ? "#{$parsedUrl['fragment']}" : '');
     }
 
-    private function urlFromGlobal(): string
+    protected function urlFromGlobal(): string
     {
         $urlSegments = [];
         $urlSegments['scheme'] = !empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https' : 'http';
@@ -301,5 +296,15 @@ class SignedUrl implements Plugin
     public function setTimestamp(?int $timestamp): void
     {
         $this->timestamp = $timestamp;
+    }
+
+    protected function sendRedirectResponse(string $canonicalUrl): void
+    {
+        header('Cache-Control: s-maxage=0, max-age=0, must-revalidate', true, 302);
+        header('Expires: Mon, 23 Jan 1978 10:00:00 GMT', true);
+        header('Location: ' . $canonicalUrl);
+        $escapedUrl = htmlspecialchars($canonicalUrl, ENT_IGNORE | ENT_QUOTES, 'UTF-8');
+        echo "<h1>Redirect</h1>\n\n<p><a href=\"{$escapedUrl}\">Please click here to continue</a>.</p>";
+        die();
     }
 }

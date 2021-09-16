@@ -16,6 +16,7 @@
     ],
     "require": {
         "php": ">=7.4",
+        "ext-json": "*",
         "nette/utils": "^3.0"
     },
     "require-dev": {

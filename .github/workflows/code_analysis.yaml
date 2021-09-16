@@ -18,7 +18,8 @@ jobs:
             run: composer phpstan
 
           - name: Nette Tester
-            run: composer tester
+            run: composer tester -- -C
+
         php:
           - "7.4"
           - "8.0"
@@ -38,6 +39,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: json
           coverage: none
 
 

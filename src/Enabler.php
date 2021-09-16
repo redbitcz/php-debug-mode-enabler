@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Redbitcz\DebugMode;
 
+use DateTimeInterface;
 use Nette\IOException;
 use Nette\Utils\DateTime as NetteDateTime;
 use Nette\Utils\FileSystem;
@@ -68,14 +69,17 @@ class Enabler
         return $this;
     }
 
-    public function activate(bool $isDebug, ?string $time = self::DEFAULT_TTL): void
+    /**
+     * @param string|int|DateTimeInterface|null $expires
+     */
+    public function activate(bool $isDebug, $expires = null): void
     {
         if ($tokenName = $this->getTokenName()) {
             $this->destroyToken($tokenName);
         }
 
-        $tokenExpires = (int)NetteDateTime::from($time ?? self::DEFAULT_TTL)->format('U');
-        $cookieExpires = $time === null ? 0 : $tokenExpires;
+        $tokenExpires = (int)NetteDateTime::from($expires ?? self::DEFAULT_TTL)->format('U');
+        $cookieExpires = $expires === null ? 0 : $tokenExpires;
         $tokenName = $this->createToken($isDebug, $tokenExpires);
         setcookie(self::DEBUG_COOKIE_NAME, $tokenName, ['expires' => $cookieExpires] + $this->cookieOptions);
 

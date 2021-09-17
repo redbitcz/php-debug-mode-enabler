@@ -24,7 +24,7 @@ class SignUrlTest extends \Tester\TestCase
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path?query=value', 1600000600);
-        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjoiZ2V0IiwibW9kIjowLCJ2YWwiOjF9.61Z0pPW3lJN2WDoUhOfsZ4m16Q3hjtVFJep_t_qoQ5c';
+        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjpbImdldCJdLCJtb2QiOjAsInZhbCI6MX0.E2__15ZLCOvLRA1jG3tq47DctbZ44sLYYDLXGElMrDs';
         Assert::equal($expected, $token);
     }
 
@@ -35,7 +35,7 @@ class SignUrlTest extends \Tester\TestCase
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->getToken('https://host.tld/path?query=value', 1600000600);
-        $expected = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0R2V0VG9rZW4iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDYwMCwic3ViIjoiaHR0cHM6XC9cL2hvc3QudGxkXC9wYXRoP3F1ZXJ5PXZhbHVlIiwibWV0aCI6ImdldCIsIm1vZCI6MCwidmFsIjoxfQ.KO0DRN8hsn_MYZI3iRMpw5uRJ9hKh1taex-6k02BwMk';
+        $expected = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0R2V0VG9rZW4iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDYwMCwic3ViIjoiaHR0cHM6XC9cL2hvc3QudGxkXC9wYXRoP3F1ZXJ5PXZhbHVlIiwibWV0aCI6WyJnZXQiXSwibW9kIjowLCJ2YWwiOjF9.I6tEfFneSxuY9qAjRf5esYFPonChbliZqGoijtv2iHw';
         Assert::equal($expected, $token);
     }
 
@@ -52,7 +52,7 @@ class SignUrlTest extends \Tester\TestCase
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyToken($token);
-        $expected = ['https://host.tld/path?query=value', 'get', 0, 1, 1600000600];
+        $expected = ['https://host.tld/path?query=value', ['get'], 0, 1, 1600000600];
         Assert::equal($expected, $parsed);
     }
 
@@ -70,7 +70,7 @@ class SignUrlTest extends \Tester\TestCase
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyUrl($tokenUrl);
-        $expected = ['get', 0, 1, 1600000600];
+        $expected = [['get'], 0, 1, 1600000600];
         Assert::equal($expected, $parsed);
     }
 

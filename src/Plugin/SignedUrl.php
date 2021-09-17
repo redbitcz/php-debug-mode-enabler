@@ -13,7 +13,7 @@ use RuntimeException;
 
 /**
  * @phpstan-type ParsedUrl array{'scheme'?: string, 'host'?: string, 'port'?: int, 'user'?: string, 'pass'?: string, 'path'?: string, 'query'?: string, 'fragment'?: string}
- * @phpstan-type ClaimsSet array{'iss': string, 'aud': string|null, 'iat': int, 'exp': int, 'sub': string, 'meth': string, 'mod': int, 'val': int}
+ * @phpstan-type ClaimsSet array{'iss': string, 'aud': string|null, 'iat': int, 'exp': int, 'sub': string, 'meth': array<int, string>, 'mod': int, 'val': int}
  */
 class SignedUrl implements Plugin
 {
@@ -65,6 +65,7 @@ class SignedUrl implements Plugin
         int $mode = self::MODE_REQUEST,
         int $value = self::VALUE_ENABLE
     ): string {
+        /** @var ParsedUrl|false $parsedUrl */
         $parsedUrl = parse_url($url);
 
         if ($parsedUrl === false) {
@@ -100,7 +101,7 @@ class SignedUrl implements Plugin
             'iat' => $this->timestamp ?? time(),
             'exp' => $expire,
             'sub' => $url,
-            'meth' => self::HTTP_METHOD_GET,
+            'meth' => [self::HTTP_METHOD_GET],
             'mod' => $mode,
             'val' => $value,
         ];
@@ -143,9 +144,9 @@ class SignedUrl implements Plugin
         $url = $url ?? $this->urlFromGlobal();
         $method = $method ?? $_SERVER['REQUEST_METHOD'];
 
-        [$allowedMethod, $mode, $value, $expires] = $this->verifyUrl($url);
+        [$allowedMethods, $mode, $value, $expires] = $this->verifyUrl($url);
 
-        if (strcasecmp($method, $allowedMethod) !== 0) {
+        if (in_array(strtolower($method), $allowedMethods, true) === false) {
             throw new SignedUrlVerificationException('HTTP method doesn\'t match signed HTTP method');
         }
 
@@ -153,20 +154,20 @@ class SignedUrl implements Plugin
     }
 
     /**
-     * @return array{string, int, int, int}
+     * @return array{array<int, string>, int, int, int}
      */
     public function verifyUrl(string $url, bool $allowRedirect = false): array
     {
-        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        $url = parse_url($url);
+        /** @var ParsedUrl|false $parsedUrl */
+        $parsedUrl = parse_url($url);
 
-        if ($url === false) {
+        if ($parsedUrl === false) {
             throw new SignedUrlVerificationException('Url is invalid');
         }
 
         // Parse token from Query string
         // Note: Not parsed by parse_str() to prevent broke URL (repeated arguments like `?same_arg=1&same_arg=2`)
-        $query = $url['query'] ?? '';
+        $query = $parsedUrl['query'] ?? '';
         if (preg_match(
                 '/(?<token_key>[?&]' . self::URL_QUERY_TOKEN_KEY . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
                 $query,
@@ -181,7 +182,7 @@ class SignedUrl implements Plugin
         $remainingOffset = $matches['remaining'][1] ?? null;
 
         // Parse token – when token invalid, no URL canonicalization proceed
-        [$allowedUrl, $allowedMethod, $mode, $value, $expires] = $this->verifyToken($token);
+        [$allowedUrl, $allowedMethods, $mode, $value, $expires] = $this->verifyToken($token);
 
         // Some apps modifing URL
         if ($remainingOffset !== null) {
@@ -189,26 +190,26 @@ class SignedUrl implements Plugin
                 throw new SignedUrlVerificationException('URL contains unallowed queries after Signing Token');
             }
 
-            $canonicalUrl = $this->buildUrl(['query' => substr($query, 0, $remainingOffset)] + $url);
+            $canonicalUrl = $this->buildUrl(['query' => substr($query, 0, $remainingOffset)] + $parsedUrl);
             $this->sendRedirectResponse($canonicalUrl);
         }
 
-        $signedUrl = $this->buildUrl(['query' => substr($query, 0, $tokenOffset)] + $url);
+        $signedUrl = $this->buildUrl(['query' => substr($query, 0, $tokenOffset)] + $parsedUrl);
 
         if ($signedUrl !== $allowedUrl) {
             throw new SignedUrlVerificationException('URL doesn\'t match signed URL');
         }
 
-        return [$allowedMethod, $mode, $value, $expires];
+        return [$allowedMethods, $mode, $value, $expires];
     }
 
     /**
-     * @return array{string, string, int, int, int}
+     * @return array{string, array<int, string>, int, int, int}
      */
     public function verifyToken(string $token): array
     {
         try {
-            /** @var ClaimsSet */
+            /** @var ClaimsSet $payload */
             $payload = JWT::decode($token, $this->key, [$this->algorithm]);
         } catch (RuntimeException $e) {
             throw new SignedUrlVerificationException('JWT Token invalid', 0, $e);
@@ -247,11 +248,11 @@ class SignedUrl implements Plugin
         }
 
         return [
-            (string)$payload->sub,
-            (string)$payload->meth,
+            $payload->sub,
+            $payload->meth,
             $payload->mod,
             $payload->val,
-            (int)$payload->exp
+            $payload->exp
         ];
     }
 

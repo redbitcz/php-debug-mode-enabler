@@ -32,7 +32,6 @@ class SignedUrl implements Plugin
 
     private const URL_QUERY_TOKEN_KEY = '_debug';
     private const ISSUER_ID = 'cz.redbit.debug.url';
-    private const HTTP_METHOD_GET = 'get';
 
     /** @var resource|string */
     private $key;
@@ -58,12 +57,14 @@ class SignedUrl implements Plugin
 
     /**
      * @param string|int|DateTimeInterface $expire
+     * @param array<int, string> $allowedHttpMethods
      */
     public function signUrl(
         string $url,
         $expire,
         int $mode = self::MODE_REQUEST,
-        int $value = self::VALUE_ENABLE
+        int $value = self::VALUE_ENABLE,
+        array $allowedHttpMethods = ['get']
     ): string {
         /** @var ParsedUrl|false $parsedUrl */
         $parsedUrl = parse_url($url);
@@ -76,7 +77,9 @@ class SignedUrl implements Plugin
             throw new LogicException('Only absolute URL is allowed to sign');
         }
 
-        $token = $this->getToken($url, $expire, $mode, $value);
+        $signUrl = $this->normalizeUrl($parsedUrl);
+
+        $token = $this->getToken($this->buildUrl($signUrl), $allowedHttpMethods, $expire, $mode, $value);
 
         $parsedUrl['query'] = ($parsedUrl['query'] ?? '') . ((($parsedUrl['query'] ?? '') === '') ? '?' : '&')
             . self::URL_QUERY_TOKEN_KEY . '=' . urlencode($token);
@@ -85,13 +88,15 @@ class SignedUrl implements Plugin
     }
 
     /**
+     * @param array<int, string> $allowedMethods
      * @param string|int|DateTimeInterface $expire
      */
     public function getToken(
         string $url,
+        array $allowedMethods,
         $expire,
-        int $mode = self::MODE_REQUEST,
-        int $value = self::VALUE_ENABLE
+        int $mode,
+        int $value
     ): string {
         $expire = (int)DateTime::from($expire)->format('U');
 
@@ -101,7 +106,7 @@ class SignedUrl implements Plugin
             'iat' => $this->timestamp ?? time(),
             'exp' => $expire,
             'sub' => $url,
-            'meth' => [self::HTTP_METHOD_GET],
+            'meth' => $allowedMethods,
             'mod' => $mode,
             'val' => $value,
         ];
@@ -194,6 +199,7 @@ class SignedUrl implements Plugin
             $this->sendRedirectResponse($canonicalUrl);
         }
 
+        $parsedUrl = $this->normalizeUrl($parsedUrl);
         $signedUrl = $this->buildUrl(['query' => substr($query, 0, $tokenOffset)] + $parsedUrl);
 
         if ($signedUrl !== $allowedUrl) {
@@ -307,5 +313,17 @@ class SignedUrl implements Plugin
         $escapedUrl = htmlspecialchars($canonicalUrl, ENT_IGNORE | ENT_QUOTES, 'UTF-8');
         echo "<h1>Redirect</h1>\n\n<p><a href=\"{$escapedUrl}\">Please click here to continue</a>.</p>";
         die();
+    }
+
+    /**
+     * @param ParsedUrl $url
+     * @return ParsedUrl
+     */
+    protected function normalizeUrl(array $url): array
+    {
+        $url['path'] = ($url['path'] ?? '') === '' ? '/' : ($url['path']??'');
+        unset($url['fragment']);
+        /** @var ParsedUrl $url (bypass PhpStan bug) */
+        return $url;
     }
 }

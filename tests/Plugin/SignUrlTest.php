@@ -28,13 +28,30 @@ class SignUrlTest extends \Tester\TestCase
         Assert::equal($expected, $token);
     }
 
+    public function testSignFragment(): void
+    {
+        $audience = 'test.' . __FUNCTION__;
+
+        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin->setTimestamp(1600000000);
+        $token = $plugin->signUrl('https://host.tld/path?query=value#fragment', 1600000600);
+        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbkZyYWdtZW50IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDA2MDAsInN1YiI6Imh0dHBzOlwvXC9ob3N0LnRsZFwvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFsIjoxfQ.9oIORBXW-hW8vTPdJglEdEMm19nwAvw2wLAxqWvFh3Y#fragment';
+        Assert::equal($expected, $token);
+    }
+
     public function testGetToken(): void
     {
         $audience = 'test.' . __FUNCTION__;
 
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
-        $token = $plugin->getToken('https://host.tld/path?query=value', 1600000600);
+        $token = $plugin->getToken(
+            'https://host.tld/path?query=value',
+            ['get'],
+            1600000600,
+            SignedUrl::MODE_REQUEST,
+            SignedUrl::VALUE_ENABLE
+        );
         $expected = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0R2V0VG9rZW4iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDYwMCwic3ViIjoiaHR0cHM6XC9cL2hvc3QudGxkXC9wYXRoP3F1ZXJ5PXZhbHVlIiwibWV0aCI6WyJnZXQiXSwibW9kIjowLCJ2YWwiOjF9.I6tEfFneSxuY9qAjRf5esYFPonChbliZqGoijtv2iHw';
         Assert::equal($expected, $token);
     }
@@ -46,7 +63,13 @@ class SignUrlTest extends \Tester\TestCase
 
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
-        $token = $plugin->getToken('https://host.tld/path?query=value', 1600000600);
+        $token = $plugin->getToken(
+            'https://host.tld/path?query=value',
+            ['get'],
+            1600000600,
+            SignedUrl::MODE_REQUEST,
+            SignedUrl::VALUE_ENABLE
+        );
 
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
@@ -171,16 +194,39 @@ class SignUrlTest extends \Tester\TestCase
     public function testVerifyUrlWithSuffixRedirect(): void
     {
         $timestamp = 1600000000;
-        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjoiZ2V0IiwibW9kIjowLCJ2YWwiOjF9.61Z0pPW3lJN2WDoUhOfsZ4m16Q3hjtVFJep_t_qoQ5c';
-
-        $tokenUrl = $expected . '&fbclid=123456789';
+        $tokenUrl = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjoiZ2V0IiwibW9kIjowLCJ2YWwiOjF9.61Z0pPW3lJN2WDoUhOfsZ4m16Q3hjtVFJep_t_qoQ5c'
+            . '&fbclid=123456789';
 
         // Mock plugin without redirect
         $plugin = new class(self::KEY_HS256, 'HS256', 'test.testSign') extends SignedUrl {
             protected function sendRedirectResponse(string $canonicalUrl): void
             {
                 $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjoiZ2V0IiwibW9kIjowLCJ2YWwiOjF9.61Z0pPW3lJN2WDoUhOfsZ4m16Q3hjtVFJep_t_qoQ5c';
-                Assert::equal($canonicalUrl, $expected);
+                Assert::equal($expected, $canonicalUrl);
+            }
+        };
+
+        $plugin->setTimestamp($timestamp);
+        JWT::$timestamp = $timestamp;
+        $plugin->verifyUrl($tokenUrl, true);
+    }
+
+    public function testVerifyUrlWithSuffixRedirectFragment(): void
+    {
+        $timestamp = 1600000000;
+        $tokenUrl = 'https://host.tld/path?query=value'
+            . '&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjoiZ2V0IiwibW9kIjowLCJ2YWwiOjF9.61Z0pPW3lJN2WDoUhOfsZ4m16Q3hjtVFJep_t_qoQ5c'
+            . '&fbclid=123456789'
+            . '#hash';
+
+        // Mock plugin without redirect
+        $plugin = new class(self::KEY_HS256, 'HS256', 'test.testSign') extends SignedUrl {
+            protected function sendRedirectResponse(string $canonicalUrl): void
+            {
+                $expected = 'https://host.tld/path?query=value'
+                    . '&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjoiZ2V0IiwibW9kIjowLCJ2YWwiOjF9.61Z0pPW3lJN2WDoUhOfsZ4m16Q3hjtVFJep_t_qoQ5c'
+                    . '#hash';
+                Assert::equal($expected, $canonicalUrl);
             }
         };
 

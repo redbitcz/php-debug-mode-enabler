@@ -16,7 +16,16 @@
     ],
     "require": {
         "php": ">=7.4",
+        "ext-json": "*",
         "nette/utils": "^3.0"
+    },
+    "require-dev": {
+        "firebase/php-jwt": "^5.0",
+        "nette/tester": "^2.4",
+        "phpstan/phpstan": "^0.12.98"
+    },
+    "suggest": {
+        "firebase/php-jwt": "Optional, required for SignedUrl plugin"
     },
     "autoload": {
         "psr-4": {
@@ -35,10 +44,6 @@
         "branch-alias": {
             "dev-master": "2.0-dev"
         }
-    },
-    "require-dev": {
-        "phpstan/phpstan": "^0.12.98",
-        "nette/tester": "^2.4"
     },
     "scripts": {
         "phpstan": "phpstan analyze src -c phpstan.neon --level 8",

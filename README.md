@@ -113,5 +113,74 @@ services:
         imported: true
 ```  
 
+## Plugins
+
+Detector supports custom plugin. You can build custom plugin to provide your own roles to manage Debug Mode. Plugin must
+implements `Plugin` interface what means add `__invoke()` method. That method is called always is Detector aksed to
+detect mode.
+
+Plugin retuns result of detection:
+
+- `null` – no result – Detector will try to ask another plugin or detection method to decide
+- `true` – force turn-on debug mode for current request
+- `false` – force turn-off debug mode for current request
+
+Note: You should return `null` value when Plugin doesn't explicitly matches rule. Boolean value is always stops
+processing detection rules.
+
+Don't do this:
+
+```php
+if (…) {
+    return true;
+} else {
+    return false;
+}
+```
+
+instead return `null` when your rule is not matched: 
+
+```php
+if (…) {
+    return true;
+} else {
+    return null;
+}
+```
+
+Your Plugin you can register to Detector with method `appendPlugin()` or `prepedndPlugin()`.
+
+```php
+$detector = new \Redbitcz\DebugMode\Detector();
+
+$plugin = new MyPlugin();
+
+$detector->appendPlugin($plugin);
+
+$detector->isDebugMode(); // <---- this invoke all Plugins
+```
+
+## SignUrl plugin
+
+`SignUrl` plugin provide secure way to share link with activated Debug Mode. 
+
+```php
+$plugin = new \Redbitcz\DebugMode\Plugin\SignedUrl('secretkey', 'HS256', 'https://myapp.cz');
+$detector->appendPlugin($plugin);
+
+$signedUrl = $plugin->signUrl('https://myapp.cz/failingPage', '+1 hour');
+
+echo 'Private link with activated Debug mode: ' . htmlspecialchars($signedUrl, ENT_QUOTES | ENT_HTML5 | ENT_SUBSTITUTE);
+```
+
+### Security notes
+
+Wrong usage of the `SignUrl` plugin can open critical vulnerability issue at your App. Follow this instructions:  
+
+- Always create `SignUrl` with strong and Secret key, use key generator like: `base64_encode(random_bytes(32))`
+- Always create `SignUrl` with specified `$audience` parameter which distinguishes versions of app (stage vs production)
+to prevent unwanted re-using signatures between them
+([read more about importance of audience](https://stackoverflow.com/a/41237822/1641372)).
+
 ## License
 The MIT License (MIT). Please see [License File](LICENSE) for more information.

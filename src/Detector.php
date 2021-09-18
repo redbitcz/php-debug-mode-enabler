@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Redbitcz\DebugMode;
 
+use Redbitcz\DebugMode\Plugin\Plugin;
+
 class Detector
 {
     /** Name of Environment variable used to detect Debug mode */
@@ -36,9 +38,11 @@ class Detector
 
 
     private ?Enabler $enabler;
-    private int $mode;
     /** @var string[] */
     private array $ips = ['::1', '127.0.0.1'];
+
+    /** @var array<int, callable> */
+    private array $detections;
 
     /**
      * @param int $mode Enables methods which is used to detect Debug mode
@@ -52,8 +56,21 @@ class Detector
             );
         }
 
+        $this->detections = array_filter(
+            [
+                $mode & self::MODE_ENABLER ? [$this, 'isDebugModeByEnabler'] : null,
+                $mode & self::MODE_COOKIE ? [$this, 'isDebugModeByCookie'] : null,
+                $mode & self::MODE_ENV ? [$this, 'isDebugModeByEnv'] : null,
+                $mode & self::MODE_IP ? [$this, 'isDebugModeByIp'] : null,
+            ]
+        );
+
         $this->enabler = $enabler;
-        $this->mode = $mode;
+    }
+
+    public function hasEnabler(): bool
+    {
+        return $this->enabler !== null;
     }
 
     public function getEnabler(): Enabler
@@ -74,11 +91,12 @@ class Detector
      */
     public function isDebugMode(?bool $default = false): ?bool
     {
-        return ($this->mode & self::MODE_ENABLER ? $this->isDebugModeByEnabler() : null)
-            ?? ($this->mode & self::MODE_COOKIE ? $this->isDebugModeByCookie() : null)
-            ?? ($this->mode & self::MODE_ENV ? $this->isDebugModeByEnv() : null)
-            ?? ($this->mode & self::MODE_IP ? $this->isDebugModeByIp() : null)
-            ?? $default;
+        foreach ($this->detections as $detection) {
+            if (($result = $detection($this)) !== null) {
+                return $result;
+            }
+        }
+        return $default;
     }
 
     /**
@@ -152,6 +170,7 @@ class Detector
 
     /**
      * Set client IP address with allowed Debug mode
+     * @return static
      */
     public function setAllowedIp(string ...$ips): self
     {
@@ -161,10 +180,25 @@ class Detector
 
     /**
      * Add client IP address with allowed Debug mode
+     * @return static
      */
     public function addAllowedIp(string ...$ips): self
     {
         $this->ips = array_merge($this->ips, $ips);
+        return $this;
+    }
+
+    /** @return static */
+    public function prependPlugin(Plugin $plugin): self
+    {
+        array_unshift($this->detections, $plugin);
+        return $this;
+    }
+
+    /** @return static */
+    public function appendPlugin(Plugin $plugin): self
+    {
+        $this->detections[] = $plugin;
         return $this;
     }
 

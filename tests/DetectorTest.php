@@ -7,6 +7,7 @@ namespace Redbitcz\DebugModeTests;
 use Redbitcz\DebugMode\Detector;
 use Redbitcz\DebugMode\Enabler;
 use Redbitcz\DebugMode\InconsistentEnablerModeException;
+use Redbitcz\DebugMode\Plugin\Plugin;
 use Tester\Assert;
 use Tester\Helpers;
 use Tester\TestCase;
@@ -211,6 +212,121 @@ class DetectorTest extends TestCase
         Assert::exception(function () {
             Detector::detect(Detector::MODE_FULL);
         }, InconsistentEnablerModeException::class);
+    }
+
+    public function testPluginPrepend()
+    {
+        $detector = new Detector(0);
+        $detector->prependPlugin(
+            new class implements Plugin {
+                public function __invoke(Detector $detector): ?bool
+                {
+                    Assert::true(true);
+                    return null;
+                }
+            }
+        );
+        $detector->isDebugMode();
+    }
+
+    public function testPluginAppend()
+    {
+        $detector = new Detector(0);
+        $detector->appendPlugin(
+            new class implements Plugin {
+                public function __invoke(Detector $detector): ?bool
+                {
+                    Assert::true(true);
+                    return null;
+                }
+            }
+        );
+        $detector->isDebugMode();
+    }
+
+    public function getPluginPrependReturnsProvider(): array
+    {
+        return [
+            [null, true],
+            [true, true],
+            [false, false],
+        ];
+    }
+
+    /**
+     * @dataProvider getPluginPrependReturnsProvider
+     */
+    public function testPluginPrependReturn(?bool $state, ?bool $result): void
+    {
+        $detector = new Detector(0);
+        $detector->prependPlugin(
+            new class() implements Plugin {
+                public function __invoke(Detector $detector): ?bool
+                {
+                    return true;
+                }
+            }
+        );
+        $detector->prependPlugin(
+            new class($state) implements Plugin {
+                private ?bool $state;
+
+                public function __construct(?bool $state)
+                {
+                    $this->state = $state;
+                }
+
+                public function __invoke(Detector $detector): ?bool
+                {
+                    return $this->state;
+                }
+            }
+        );
+
+        Assert::equal($result, $detector->isDebugMode());
+    }
+
+
+    public function getPluginAppendReturnsProvider(): array
+    {
+        return [
+            [null, false],
+            [true, false],
+            [false, false],
+        ];
+    }
+
+    /**
+     * @dataProvider getPluginAppendReturnsProvider
+     */
+    public function testPluginAppendReturn(?bool $state, ?bool $result): void
+    {
+        $detector = new Detector(0);
+        $detector->appendPlugin(
+            new class() implements Plugin {
+                public function __invoke(Detector $detector): ?bool
+                {
+                    return false;
+                }
+            }
+        );
+        $detector->appendPlugin(
+            new class($state) implements Plugin {
+                private ?bool $state;
+
+                public function __construct(?bool $state)
+                {
+                    $this->state = $state;
+                }
+
+                public function __invoke(Detector $detector): ?bool
+                {
+                    return $this->state;
+                }
+            }
+        );
+
+        Assert::equal($result, $detector->isDebugMode());
     }
 }
 

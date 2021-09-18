@@ -18,11 +18,11 @@ jobs:
             run: composer phpstan
 
           - name: Nette Tester
-            run: composer tester
+            run: composer tester -- -C
+
         php:
           - "7.4"
           - "8.0"
-          - "8.1"
 
     name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
@@ -38,6 +38,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: json
           coverage: none
 
 
@@ -53,8 +54,6 @@ jobs:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
-          restore-keys: |
-            ${{ runner.os }}-composer-data-
 
 
       - uses: actions/cache@v2

@@ -200,9 +200,14 @@ class SignedUrl implements Plugin
         }
 
         $parsedUrl = $this->normalizeUrl($parsedUrl);
-        $signedUrl = $this->buildUrl(
-            ['query' => $tokenOffset > 0 ? substr($query, 0, $tokenOffset) : null] + $parsedUrl
-        );
+        if ($tokenOffset > 0) {
+            $parsedUrl['query'] = substr($query, 0, $tokenOffset);
+        } else {
+            unset($parsedUrl['query']);
+            /** @var ParsedUrl $parsedUrl (bypass PhpStan bug) */
+        }
+
+        $signedUrl = $this->buildUrl($parsedUrl);
 
         if ($signedUrl !== $allowedUrl) {
             throw new SignedUrlVerificationException('URL doesn\'t match signed URL');

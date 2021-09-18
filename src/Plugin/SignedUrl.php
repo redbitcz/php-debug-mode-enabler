@@ -283,16 +283,24 @@ class SignedUrl implements Plugin
     {
         $urlSegments = [];
         $urlSegments['scheme'] = !empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https' : 'http';
-        $urlSegments['host'] = strtolower($_SERVER['HTTP_HOST'] ?? '');
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $urlSegments['host'] = strtolower($_SERVER['HTTP_HOST']);
+        }
 
         $requestUrl = $_SERVER['REQUEST_URI'] ?? '/';
         $requestUrl = preg_replace('#^\w++://[^/]++#', '', $requestUrl);
         $tmp = explode('?', $requestUrl, 2);
         $urlSegments['path'] = $tmp[0];
-        $urlSegments['query'] = ($tmp[1] ?? '');
+        if (isset($tmp[1])) {
+            $urlSegments['query'] = $tmp[1];
+        }
 
-        $urlSegments['user'] = ($_SERVER['PHP_AUTH_USER'] ?? '');
-        $urlSegments['pass'] = ($_SERVER['PHP_AUTH_PW'] ?? '');
+        if (isset($_SERVER['PHP_AUTH_USER'])) {
+            $urlSegments['user'] = $_SERVER['PHP_AUTH_USER'];
+        }
+        if (isset($_SERVER['PHP_AUTH_PW'])) {
+            $urlSegments['pass'] = $_SERVER['PHP_AUTH_PW'];
+        }
 
         return $this->buildUrl($urlSegments);
     }

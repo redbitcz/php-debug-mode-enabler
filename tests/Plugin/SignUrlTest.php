@@ -94,6 +94,24 @@ class SignUrlTest extends \Tester\TestCase
     {
         $audience = 'test.' . __FUNCTION__;
         $timestamp = 1600000000;
+        $url = 'https://host.tld/path';
+
+        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin->setTimestamp($timestamp);
+        $tokenUrl = $plugin->signUrl($url, 1600000600);
+
+        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin->setTimestamp($timestamp);
+        JWT::$timestamp = $timestamp;
+        $parsed = $plugin->verifyUrl($tokenUrl);
+        $expected = [['get'], 0, 1, 1600000600];
+        Assert::equal($expected, $parsed);
+    }
+
+    public function testVerifyUrlQuery(): void
+    {
+        $audience = 'test.' . __FUNCTION__;
+        $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);

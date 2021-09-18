@@ -174,7 +174,7 @@ class SignedUrl implements Plugin
         // Note: Not parsed by parse_str() to prevent broke URL (repeated arguments like `?same_arg=1&same_arg=2`)
         $query = $parsedUrl['query'] ?? '';
         if (preg_match(
-                '/(?<token_key>[?&]' . self::URL_QUERY_TOKEN_KEY . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
+                '/(?<token_key>(?:^|&|^&)' . self::URL_QUERY_TOKEN_KEY . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
                 $query,
                 $matches,
                 PREG_OFFSET_CAPTURE
@@ -200,7 +200,14 @@ class SignedUrl implements Plugin
         }
 
         $parsedUrl = $this->normalizeUrl($parsedUrl);
-        $signedUrl = $this->buildUrl(['query' => substr($query, 0, $tokenOffset)] + $parsedUrl);
+        if ($tokenOffset > 0) {
+            $parsedUrl['query'] = substr($query, 0, $tokenOffset);
+        } else {
+            unset($parsedUrl['query']);
+            /** @var ParsedUrl $parsedUrl (bypass PhpStan bug) */
+        }
+
+        $signedUrl = $this->buildUrl($parsedUrl);
 
         if ($signedUrl !== $allowedUrl) {
             throw new SignedUrlVerificationException('URL doesn\'t match signed URL');
@@ -283,16 +290,24 @@ class SignedUrl implements Plugin
     {
         $urlSegments = [];
         $urlSegments['scheme'] = !empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https' : 'http';
-        $urlSegments['host'] = strtolower($_SERVER['HTTP_HOST'] ?? '');
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $urlSegments['host'] = strtolower($_SERVER['HTTP_HOST']);
+        }
 
         $requestUrl = $_SERVER['REQUEST_URI'] ?? '/';
         $requestUrl = preg_replace('#^\w++://[^/]++#', '', $requestUrl);
         $tmp = explode('?', $requestUrl, 2);
         $urlSegments['path'] = $tmp[0];
-        $urlSegments['query'] = ($tmp[1] ?? '');
+        if (isset($tmp[1])) {
+            $urlSegments['query'] = $tmp[1];
+        }
 
-        $urlSegments['user'] = ($_SERVER['PHP_AUTH_USER'] ?? '');
-        $urlSegments['pass'] = ($_SERVER['PHP_AUTH_PW'] ?? '');
+        if (isset($_SERVER['PHP_AUTH_USER'])) {
+            $urlSegments['user'] = $_SERVER['PHP_AUTH_USER'];
+        }
+        if (isset($_SERVER['PHP_AUTH_PW'])) {
+            $urlSegments['pass'] = $_SERVER['PHP_AUTH_PW'];
+        }
 
         return $this->buildUrl($urlSegments);
     }

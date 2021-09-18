@@ -174,7 +174,7 @@ class SignedUrl implements Plugin
         // Note: Not parsed by parse_str() to prevent broke URL (repeated arguments like `?same_arg=1&same_arg=2`)
         $query = $parsedUrl['query'] ?? '';
         if (preg_match(
-                '/(?<token_key>[?&]' . self::URL_QUERY_TOKEN_KEY . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
+                '/(?<token_key>(?:^|&|^&)' . self::URL_QUERY_TOKEN_KEY . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
                 $query,
                 $matches,
                 PREG_OFFSET_CAPTURE
@@ -200,7 +200,9 @@ class SignedUrl implements Plugin
         }
 
         $parsedUrl = $this->normalizeUrl($parsedUrl);
-        $signedUrl = $this->buildUrl(['query' => substr($query, 0, $tokenOffset)] + $parsedUrl);
+        $signedUrl = $this->buildUrl(
+            ['query' => $tokenOffset > 0 ? substr($query, 0, $tokenOffset) : null] + $parsedUrl
+        );
 
         if ($signedUrl !== $allowedUrl) {
             throw new SignedUrlVerificationException('URL doesn\'t match signed URL');

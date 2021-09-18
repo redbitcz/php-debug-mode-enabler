@@ -92,7 +92,7 @@ class Detector
     public function isDebugMode(?bool $default = false): ?bool
     {
         foreach ($this->detections as $detection) {
-            if (($result = $detection()) !== null) {
+            if (($result = $detection($this)) !== null) {
                 return $result;
             }
         }

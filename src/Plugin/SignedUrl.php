@@ -81,7 +81,7 @@ class SignedUrl implements Plugin
 
         $token = $this->getToken($this->buildUrl($signUrl), $allowedHttpMethods, $expire, $mode, $value);
 
-        $parsedUrl['query'] = ($parsedUrl['query'] ?? '') . ((($parsedUrl['query'] ?? '') === '') ? '?' : '&')
+        $parsedUrl['query'] = ltrim(($parsedUrl['query'] ?? '') . '&', '&')
             . self::URL_QUERY_TOKEN_KEY . '=' . urlencode($token);
 
         return $this->buildUrl($parsedUrl);
@@ -321,7 +321,7 @@ class SignedUrl implements Plugin
      */
     protected function normalizeUrl(array $url): array
     {
-        $url['path'] = ($url['path'] ?? '') === '' ? '/' : ($url['path']??'');
+        $url['path'] = ($url['path'] ?? '') === '' ? '/' : ($url['path'] ?? '');
         unset($url['fragment']);
         /** @var ParsedUrl $url (bypass PhpStan bug) */
         return $url;

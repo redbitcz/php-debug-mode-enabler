@@ -23,8 +23,19 @@ class SignUrlTest extends \Tester\TestCase
 
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
+        $token = $plugin->signUrl('https://host.tld/path', 1600000600);
+        $expected = 'https://host.tld/path?_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGgiLCJtZXRoIjpbImdldCJdLCJtb2QiOjAsInZhbCI6MX0.MTZOii4lQ2WCk1UltRx_e9T5vCT7nq8G3kh4D8EXy7s';
+        Assert::equal($expected, $token);
+    }
+
+    public function testSignQuery(): void
+    {
+        $audience = 'test.' . __FUNCTION__;
+
+        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path?query=value', 1600000600);
-        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRwczpcL1wvaG9zdC50bGRcL3BhdGg_cXVlcnk9dmFsdWUiLCJtZXRoIjpbImdldCJdLCJtb2QiOjAsInZhbCI6MX0.E2__15ZLCOvLRA1jG3tq47DctbZ44sLYYDLXGElMrDs';
+        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnblF1ZXJ5IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDA2MDAsInN1YiI6Imh0dHBzOlwvXC9ob3N0LnRsZFwvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFsIjoxfQ.RrO7BCmdgldB7OlEIpudBWo8P33xDh-MsNjtZC34CNY';
         Assert::equal($expected, $token);
     }
 

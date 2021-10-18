@@ -103,6 +103,28 @@ class Detector
     }
 
     /**
+     * Detect Production mode (opposite to Debug mode) by all method enabled by Detector mode
+     * Returned value:
+     *   - `false` (force to turn-on debug mode)
+     *   - `true` (force to turn-off debug mode)
+     *   - `null` (unknown/automatic debug mode state)
+     */
+    public function isProductionMode(?bool $default = false): ?bool
+    {
+        if (is_bool($default)) {
+            $default = !$default;
+        }
+
+        $result = $this->isDebugMode($default);
+
+        if (is_bool($result)) {
+            $result = !$result;
+        }
+
+        return $result;
+    }
+
+    /**
      * Detect Debug mode by `DebugMode\Enabler` helper
      * Returned value:
      *   - `false` (force to turn-off debug mode)

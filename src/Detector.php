@@ -37,7 +37,8 @@ class Detector
     public const MODE_FULL = self::MODE_ENABLER | self::MODE_SIMPLE;
 
 
-    private ?Enabler $enabler;
+    private Enabler $enabler;
+
     /** @var string[] */
     private array $ips = ['::1', '127.0.0.1'];
 
@@ -65,17 +66,19 @@ class Detector
             ]
         );
 
-        $this->enabler = $enabler;
+        if ($enabler) {
+            $this->enabler = $enabler;
+        }
     }
 
     public function hasEnabler(): bool
     {
-        return $this->enabler !== null;
+        return isset($this->enabler);
     }
 
     public function getEnabler(): Enabler
     {
-        if ($this->enabler === null) {
+        if (isset($this->enabler) === false) {
             throw new InconsistentEnablerModeException('Unable to get Enabler because Detector constructed without it');
         }
 

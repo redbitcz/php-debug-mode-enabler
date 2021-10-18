@@ -128,8 +128,6 @@ class DetectorTest extends TestCase
 
     /**
      * @dataProvider getSettedIpDataProvider
-     * @param $testValue
-     * @param $expected
      */
     public function testSettedIp(array $setIp, $testValue, $expected): void
     {
@@ -158,8 +156,6 @@ class DetectorTest extends TestCase
 
     /**
      * @dataProvider getAddedIpDataProvider
-     * @param $testValue
-     * @param $expected
      */
     public function testAddedIp(array $setIp, $testValue, $expected): void
     {
@@ -195,7 +191,7 @@ class DetectorTest extends TestCase
     public function testMissingEnablerMode(): void
     {
         Assert::exception(function () {
-            $detector = new Detector(Detector::MODE_FULL);
+            new Detector(Detector::MODE_FULL);
         }, InconsistentEnablerModeException::class);
     }
 
@@ -214,7 +210,7 @@ class DetectorTest extends TestCase
         }, InconsistentEnablerModeException::class);
     }
 
-    public function testPluginPrepend()
+    public function testPluginPrepend(): void
     {
         $detector = new Detector(0);
         $detector->prependPlugin(
@@ -229,7 +225,7 @@ class DetectorTest extends TestCase
         $detector->isDebugMode();
     }
 
-    public function testPluginAppend()
+    public function testPluginAppend(): void
     {
         $detector = new Detector(0);
         $detector->appendPlugin(

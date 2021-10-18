@@ -37,14 +37,6 @@
             "Redbitcz\\DebugModeTests\\": "tests/"
         }
     },
-    "replace": {
-        "jakubboucek/nette-debug-enabler": "*"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "2.0-dev"
-        }
-    },
     "scripts": {
         "phpstan": "phpstan analyze src -c phpstan.neon --level 8",
         "tester": "tester tests"

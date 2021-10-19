@@ -268,8 +268,15 @@ class Enabler
 
         try {
             return Json::decode(FileSystem::read($file), Json::FORCE_ARRAY);
-        } catch (JsonException | IOException $e) {
-            // Yep, no error thrown, it's low-level library, just re-create storage file at next write
+        } catch (IOException $e) {
+            // Yep, no error thrown, maybe file not exists
+            return [];
+        } catch (JsonException $e) {
+            trigger_error(
+                sprintf('%s: JSON Exception during read token file \'%s\': %s', __CLASS__, $file, $e->getMessage()),
+                E_USER_WARNING
+            );
+            // It's low-level library, just re-create storage file at next write
             return [];
         }
     }

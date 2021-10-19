@@ -213,7 +213,7 @@ class Enabler
             }
         );
 
-        $this->writeStorage($list);
+        $this->writeStorage(array_values($list));
     }
 
     // TOKEN UTILS -----------------------------------------------------------------------------------------------------

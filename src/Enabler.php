@@ -45,6 +45,13 @@ class Enabler
     public function setSecure(bool $secure = true): self
     {
         $this->cookieOptions['secure'] = $secure;
+
+        if ($secure) {
+            $this->cookieOptions['samesite'] = 'Strict';
+        } elseif (isset($this->cookieOptions['samesite'])) {
+            unset ($this->cookieOptions['samesite']);
+        }
+
         return $this;
     }
 

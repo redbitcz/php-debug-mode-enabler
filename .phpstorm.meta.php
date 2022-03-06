@@ -1,4 +1,8 @@
 <?php
+/**
+ * The MIT License (MIT)
+ * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ */
 
 namespace PHPSTORM_META {
 

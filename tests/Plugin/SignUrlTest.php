@@ -1,7 +1,10 @@
 <?php
+
 /**
  * The MIT License (MIT)
  * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ *
+ * @noinspection PhpUnused
  * @testCase
  */
 
@@ -14,10 +17,11 @@ use LogicException;
 use Redbitcz\DebugMode\Plugin\SignedUrl;
 use Redbitcz\DebugMode\Plugin\SignedUrlVerificationException;
 use Tester\Assert;
+use Tester\TestCase;
 
 require __DIR__ . '/../bootstrap.php';
 
-class SignUrlTest extends \Tester\TestCase
+class SignUrlTest extends TestCase
 {
     private const KEY_HS256 = "zhYiojmp7O3VYQNuW0C5rS0VgFNgoAvuxW4IdS/0tn8";
 
@@ -148,18 +152,18 @@ class SignUrlTest extends \Tester\TestCase
         Assert::equal($expected, $parsed);
     }
 
-    public function testSignInvalidUrl()
+    public function testSignInvalidUrl(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             $url = (string)base64_decode('Ly8Eijrg+qawZw==');
             $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
             $plugin->signUrl($url, 1600000600);
         }, LogicException::class);
     }
 
-    public function testSignRelativeUrl()
+    public function testSignRelativeUrl(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             $url = '/login?email=foo@bar.cz';
             $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
             $plugin->signUrl($url, 1600000600);
@@ -179,23 +183,23 @@ class SignUrlTest extends \Tester\TestCase
         $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
-        Assert::exception(function () use ($plugin, $tokenUrl) {
+        Assert::exception(static function () use ($plugin, $tokenUrl) {
             $plugin->verifyRequest(false, $tokenUrl, 'POST');
         }, SignedUrlVerificationException::class, 'HTTP method doesn\'t match signed HTTP method');
     }
 
     public function testVerifyInvalidRequest(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
             $url = (string)base64_decode('Ly8Eijrg+qawZw==');
             $plugin->verifyRequest(false, $url, 'GET');
         }, SignedUrlVerificationException::class, 'Url is invalid');
     }
 
-    public function testVerifyInvalidUrl()
+    public function testVerifyInvalidUrl(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
             $plugin->verifyUrl('https://host.tld/path?query=value');
         }, SignedUrlVerificationException::class, 'No token in URL');
@@ -213,7 +217,7 @@ class SignUrlTest extends \Tester\TestCase
         $tokenUrl .= '&fbclid=123456789';
 
         Assert::exception(
-            function () use ($timestamp, $tokenUrl) {
+            static function () use ($timestamp, $tokenUrl) {
                 $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
                 $plugin->setTimestamp($timestamp);
                 JWT::$timestamp = $timestamp;

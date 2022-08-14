@@ -1,7 +1,10 @@
 <?php
+
 /**
  * The MIT License (MIT)
  * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ *
+ * @noinspection PhpUnused
  * @testCase
  */
 
@@ -194,14 +197,14 @@ class DetectorTest extends TestCase
 
     public function testMissingEnablerMode(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             new Detector(Detector::MODE_FULL);
         }, InconsistentEnablerModeException::class);
     }
 
     public function testMissingEnabler(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             $detector = new Detector(Detector::MODE_SIMPLE);
             $detector->getEnabler();
         }, InconsistentEnablerModeException::class);
@@ -209,7 +212,7 @@ class DetectorTest extends TestCase
 
     public function testMissingEnablerShortcut(): void
     {
-        Assert::exception(function () {
+        Assert::exception(static function () {
             Detector::detect(Detector::MODE_FULL);
         }, InconsistentEnablerModeException::class);
     }

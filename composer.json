@@ -21,8 +21,8 @@
     },
     "require-dev": {
         "firebase/php-jwt": "^5.0",
-        "nette/tester": "^2.4",
-        "phpstan/phpstan": "^0.12.98"
+        "nette/tester": "2.4.2",
+        "phpstan/phpstan": "1.8.2"
     },
     "suggest": {
         "firebase/php-jwt": "Optional, required for SignedUrl plugin"

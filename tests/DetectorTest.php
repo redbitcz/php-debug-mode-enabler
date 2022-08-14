@@ -2,6 +2,7 @@
 /**
  * The MIT License (MIT)
  * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ * @testCase
  */
 
 declare(strict_types=1);
@@ -18,7 +19,6 @@ use Tester\TestCase;
 
 require __DIR__ . '/bootstrap.php';
 
-/** @testCase */
 class DetectorTest extends TestCase
 {
     private const TEMP_DIR = __DIR__ . '/temp/enabler';

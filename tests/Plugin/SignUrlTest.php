@@ -2,6 +2,7 @@
 /**
  * The MIT License (MIT)
  * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ * @testCase
  */
 
 declare(strict_types=1);
@@ -16,7 +17,6 @@ use Tester\Assert;
 
 require __DIR__ . '/../bootstrap.php';
 
-/** @testCase */
 class SignUrlTest extends \Tester\TestCase
 {
     private const KEY_HS256 = "zhYiojmp7O3VYQNuW0C5rS0VgFNgoAvuxW4IdS/0tn8";

@@ -29,7 +29,7 @@ namespace PHPSTORM_META {
     );
 
     expectedArguments(
-        \Redbitcz\DebugMode\Detector::detectProductionMode(),
+        \Redbitcz\DebugMode\Detector::detectProduction(),
         0,
         \Redbitcz\DebugMode\Detector::MODE_FULL,
         \Redbitcz\DebugMode\Detector::MODE_SIMPLE,

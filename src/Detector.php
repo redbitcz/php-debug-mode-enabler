@@ -257,7 +257,7 @@ class Detector
     public static function detectProductionMode(
         int $mode = self::MODE_SIMPLE,
         ?string $tempDir = null,
-        ?bool $default = false
+        ?bool $default = true
     ): ?bool {
         if (is_bool($default)) {
             $default = !$default;

@@ -1,6 +1,16 @@
 parameters:
+    paths:
+        - src
+    excludePaths:
+        analyse:
+        - src/Plugin/JWT/*
+
     ignoreErrors:
         -
             message: '#Parameter \#3 \$options of function setcookie expects .+#'
             path: src/Enabler.php
             count: 2
+        -  '#.+ has unknown class (OpenSSLAsymmetricKey|OpenSSLCertificate) as its type.#' # PHP 7 compatibility
+        -  '#.+ has invalid type (OpenSSLAsymmetricKey|OpenSSLCertificate).#' # PHP 7 compatibility
+
+    reportUnmatchedIgnoredErrors: false

@@ -3,6 +3,8 @@
 /**
  * The MIT License (MIT)
  * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ *
+ * @noinspection PhpUndefinedClassInspection Library support JWT 5.0
  */
 
 declare(strict_types=1);
@@ -33,9 +35,9 @@ class JWTFirebaseV6 extends JWTFirebaseV5
         return isset($params[2]) === false || $params[2]->getName() !== 'allowed_algs';
     }
 
-    public function decode(string $jwt, $key, string $alg): stdClass
+    public function decode(string $jwt): stdClass
     {
-        return JWT::decode($jwt, new Key($key, $alg));
+        return JWT::decode($jwt, new Key($this->key, $this->algorithm));
     }
 
 

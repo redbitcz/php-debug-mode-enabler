@@ -45,37 +45,35 @@ class SignedUrl implements Plugin
     private const URL_QUERY_TOKEN_KEY = '_debug';
     private const ISSUER_ID = 'cz.redbit.debug.url';
 
-    /** @var resource|string|OpenSSLAsymmetricKey|OpenSSLCertificate */
-    private $key;
-    private string $algorithm;
     private ?string $audience;
     private ?int $timestamp;
 
     private JWTImpl $jwt;
 
     /**
+     * @param string|null $audience Recipient for which the JWT is intended
+     */
+    public function __construct(JWTImpl $jwt, ?string $audience = null)
+    {
+        $this->jwt = $jwt;
+        $this->audience = $audience;
+    }
+
+    /**
      * @param string|resource|OpenSSLAsymmetricKey|OpenSSLCertificate $key The key.
      * @param string $algorithm Supported algorithms are 'ES384','ES256', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', and 'RS512'
-     * @param string|null $audience Recipient for which the JWT is intended
      * @noinspection PhpRedundantVariableDocTypeInspection
      */
-    public function __construct($key, string $algorithm = 'HS256', ?string $audience = null)
+    public static function create($key, string $algorithm = 'HS256', ?string $audience = null): self
     {
         /** @var class-string<JWTImpl> $impl */
         foreach ([JWTFirebaseV5::class, JWTFirebaseV6::class] as $impl) {
             if ($impl::isAvailable()) {
-                $this->jwt = new $impl;
-                break;
+                return new self(new $impl($key, $algorithm), $audience);
             }
         }
 
-        if (isset($this->jwt) === false) {
-            throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ~5.0 or ~6.0');
-        }
-
-        $this->key = $key;
-        $this->algorithm = $algorithm;
-        $this->audience = $audience;
+        throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ~5.0 or ~6.0');
     }
 
     /**
@@ -134,7 +132,7 @@ class SignedUrl implements Plugin
             'val' => $value,
         ];
 
-        return $this->jwt->encode($payload, $this->key, $this->algorithm);
+        return $this->jwt->encode($payload);
     }
 
     public function __invoke(Detector $detector): ?bool
@@ -246,7 +244,7 @@ class SignedUrl implements Plugin
     {
         try {
             /** @var ClaimsSet $payload */
-            $payload = $this->jwt->decode($token, $this->key, $this->algorithm);
+            $payload = $this->jwt->decode($token);
         } catch (RuntimeException $e) {
             throw new SignedUrlVerificationException('JWT Token invalid', 0, $e);
         }

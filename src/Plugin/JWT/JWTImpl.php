@@ -15,9 +15,9 @@ interface JWTImpl
 {
     public static function isAvailable(): bool;
 
-    public function decode(string $jwt, $key, string $alg): stdClass;
+    public function decode(string $jwt): stdClass;
 
-    public function encode(array $payload, $key, string $alg): string;
+    public function encode(array $payload): string;
 
     public function setTimestamp(?int $timestamp): void;
 }

@@ -3,6 +3,8 @@
 /**
  * The MIT License (MIT)
  * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ *
+ * @noinspection PhpUndefinedClassInspection OpenSSL only optional dependency
  */
 
 declare(strict_types=1);
@@ -15,6 +17,20 @@ use stdClass;
 
 class JWTFirebaseV5 implements JWTImpl
 {
+    /** @var OpenSSLAsymmetricKey|OpenSSLCertificate|resource|string */
+    protected $key;
+    protected string $algorithm;
+
+    /**
+     * @param OpenSSLAsymmetricKey|OpenSSLCertificate|resource|string $key
+     * @param string $algorithm
+     */
+    public function __construct($key, string $algorithm = 'HS256')
+    {
+        $this->key = $key;
+        $this->algorithm = $algorithm;
+    }
+
     public static function isAvailable(): bool
     {
         if (class_exists(JWT::class) === false) {
@@ -34,14 +50,14 @@ class JWTFirebaseV5 implements JWTImpl
             && $params[2]->getName() === 'allowed_algs';
     }
 
-    public function decode(string $jwt, $key, string $alg): stdClass
+    public function decode(string $jwt): stdClass
     {
-        return JWT::decode($jwt, $key, [$alg]);
+        return JWT::decode($jwt, $this->key, [$this->algorithm]);
     }
 
-    public function encode(array $payload, $key, string $alg): string
+    public function encode(array $payload): string
     {
-        return JWT::encode($payload, $key, $alg);
+        return JWT::encode($payload, $this->key, $this->algorithm);
     }
 
     public function setTimestamp(?int $timestamp): void

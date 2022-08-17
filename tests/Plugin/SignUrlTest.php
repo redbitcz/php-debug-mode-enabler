@@ -31,7 +31,7 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path', 1600000600);
 
@@ -54,7 +54,7 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path?query=value', 1600000600);
 
@@ -77,7 +77,7 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path?query=value#fragment', 1600000600);
 
@@ -100,7 +100,7 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->getToken(
             'https://host.tld/path?query=value',
@@ -130,7 +130,7 @@ class SignUrlTest extends TestCase
         $audience = 'test.' . __FUNCTION__;
         $timestamp = 1600000000;
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $token = $plugin->getToken(
             'https://host.tld/path?query=value',
@@ -140,7 +140,7 @@ class SignUrlTest extends TestCase
             SignedUrl::VALUE_ENABLE
         );
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyToken($token);
@@ -154,11 +154,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path';
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyUrl($tokenUrl);
@@ -172,11 +172,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyUrl($tokenUrl);
@@ -190,11 +190,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyRequest(false, $tokenUrl, 'GET');
@@ -206,7 +206,7 @@ class SignUrlTest extends TestCase
     {
         Assert::exception(static function () {
             $url = (string)base64_decode('Ly8Eijrg+qawZw==');
-            $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
             $plugin->signUrl($url, 1600000600);
         }, LogicException::class);
     }
@@ -215,7 +215,7 @@ class SignUrlTest extends TestCase
     {
         Assert::exception(static function () {
             $url = '/login?email=foo@bar.cz';
-            $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
             $plugin->signUrl($url, 1600000600);
         }, LogicException::class);
     }
@@ -226,11 +226,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         Assert::exception(static function () use ($plugin, $tokenUrl) {
@@ -241,7 +241,7 @@ class SignUrlTest extends TestCase
     public function testVerifyInvalidRequest(): void
     {
         Assert::exception(static function () {
-            $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
             $url = (string)base64_decode('Ly8Eijrg+qawZw==');
             $plugin->verifyRequest(false, $url, 'GET');
         }, SignedUrlVerificationException::class, 'Url is invalid');
@@ -250,7 +250,7 @@ class SignUrlTest extends TestCase
     public function testVerifyInvalidUrl(): void
     {
         Assert::exception(static function () {
-            $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
             $plugin->verifyUrl('https://host.tld/path?query=value');
         }, SignedUrlVerificationException::class, 'No token in URL');
     }
@@ -260,7 +260,7 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
+        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
@@ -268,7 +268,7 @@ class SignUrlTest extends TestCase
 
         Assert::exception(
             static function () use ($timestamp, $tokenUrl) {
-                $plugin = new SignedUrl(self::KEY_HS256, 'HS256');
+                $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
                 $plugin->setTimestamp($timestamp);
                 JWT::$timestamp = $timestamp;
                 $plugin->verifyUrl($tokenUrl);
@@ -288,7 +288,7 @@ class SignUrlTest extends TestCase
             . '&fbclid=123456789';
 
         // Mock plugin without redirect
-        $plugin = new class(self::KEY_HS256, 'HS256', 'test.testSign') extends SignedUrl {
+        $plugin = new class(SignedUrl::create(self::KEY_HS256)->getJwt(), 'test.testSign') extends SignedUrl {
             protected function sendRedirectResponse(string $canonicalUrl): void
             {
                 $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJj'
@@ -315,7 +315,7 @@ class SignUrlTest extends TestCase
             . '#hash';
 
         // Mock plugin without redirect
-        $plugin = new class(self::KEY_HS256, 'HS256', 'test.testSign') extends SignedUrl {
+        $plugin = new class(SignedUrl::create(self::KEY_HS256)->getJwt(), 'test.testSign') extends SignedUrl {
             protected function sendRedirectResponse(string $canonicalUrl): void
             {
                 $expected = 'https://host.tld/path?query=value'

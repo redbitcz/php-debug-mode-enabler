@@ -23,10 +23,19 @@ jobs:
         php:
           - "7.4"
           - "8.0"
+          - "8.1"
 
-    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }}
+        deps:
+          - name: Lowest deps
+            key: lowest
+            arg: --prefer-lowest
+
+          - name: Current deps
+            key: current
+            arg: ''
+
+    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.deps.name }}
     runs-on: ubuntu-latest
-
 
     steps:
       - name: Checkout
@@ -53,18 +62,20 @@ jobs:
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
+          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.deps.name }}
 
 
       - uses: actions/cache@v2
         with:
           path: |
             **/composer.lock
-          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
+          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.deps.name }}
 
 
       - name: Install Composer
-        run: composer install --no-progress
+        run: composer update --no-progress ${{ matrix.deps.arg }}
 
 
-      - run: ${{ matrix.actions.run }}
+      - name: Run job
+        if: ${{ matrix.deps.key != 'lowest' && matrix.php != '8.1 }}
+        run: ${{ matrix.actions.run }}

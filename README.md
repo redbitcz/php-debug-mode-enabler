@@ -20,11 +20,15 @@ Package is optimized for invoking in very early lifecycle phase of your App
 ## Requirements
 Package requires:
 
-- PHP version at least 7.4
+- PHP version 7.4, 8.0, 8.1 or 8.2
 
 Enabler requires:
  
 - Temporary directory with writable access
+
+SignUrl plugin requires:
+
+- [Firebase JWT](https://github.com/firebase/php-jwt) v5 or v6
 
 ## Installation
 ```shell
@@ -165,7 +169,7 @@ $detector->isDebugMode(); // <---- this invoke all Plugins
 `SignUrl` plugin provide secure way to share link with activated Debug Mode. 
 
 ```php
-$plugin = new \Redbitcz\DebugMode\Plugin\SignedUrl('secretkey', 'HS256', 'https://myapp.cz');
+$plugin = \Redbitcz\DebugMode\Plugin\SignedUrl::create('secretkey', 'HS256', 'https://myapp.cz');
 $detector->appendPlugin($plugin);
 
 $signedUrl = $plugin->signUrl('https://myapp.cz/failingPage', '+1 hour');

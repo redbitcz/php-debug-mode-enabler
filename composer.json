@@ -1,9 +1,12 @@
 {
     "name": "redbitcz/debug-mode-enabler",
     "description": "Debug mode enabler - safe and clean way to manage Debug Mode in your App",
-    "keywords": ["debug"],
-    "license": ["MIT"],
-    "homepage": "https://github.com/redbitcz/php-debug-mode-enabler",
+    "license": [
+        "MIT"
+    ],
+    "keywords": [
+        "debug"
+    ],
     "authors": [
         {
             "name": "Redbit s.r.o.",
@@ -14,15 +17,16 @@
             "homepage": "https://www.jakub-boucek.cz/"
         }
     ],
+    "homepage": "https://github.com/redbitcz/php-debug-mode-enabler",
     "require": {
-        "php": "~7.4.0||~8.0.0||~8.1.0",
+        "php": "~7.4.0 || ~8.0.0 || ~8.1.0 || ~8.2.0",
         "ext-json": "*",
         "nette/utils": "^3.0"
     },
     "require-dev": {
-        "firebase/php-jwt": "^5.0",
-        "nette/tester": "2.4.2",
-        "phpstan/phpstan": "1.8.2"
+        "firebase/php-jwt": "^5.0 || ^6.0",
+        "nette/tester": "2.4.3",
+        "phpstan/phpstan": "1.9.14"
     },
     "suggest": {
         "firebase/php-jwt": "Optional, required for SignedUrl plugin"
@@ -37,8 +41,11 @@
             "Redbitcz\\DebugModeTests\\": "tests/"
         }
     },
+    "config": {
+        "sort-packages": true
+    },
     "scripts": {
-        "phpstan": "phpstan analyze src -c phpstan.neon --level 8",
+        "phpstan": "phpstan analyze -c phpstan.neon --level 5",
         "tester": "tester tests"
     }
 }

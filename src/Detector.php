@@ -271,16 +271,4 @@ class Detector
 
         return $result;
     }
-
-    /**
-     * @deprecated Use `detectProduction()`
-     * @see self::detectProduction()
-     */
-    public static function detectProductionMode(
-        int $mode = self::MODE_SIMPLE,
-        ?string $tempDir = null,
-        ?bool $default = false
-    ): ?bool {
-        return self::detectProduction($mode, $tempDir, $default);
-    }
 }

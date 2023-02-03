@@ -29,7 +29,7 @@
         "phpstan/phpstan": "1.9.14"
     },
     "suggest": {
-        "firebase/php-jwt": "Optional, required for SignedUrl plugin"
+        "firebase/php-jwt": "Optional, required for SignedUrl plugin, compatible with version 5.x and 6.x"
     },
     "autoload": {
         "psr-4": {

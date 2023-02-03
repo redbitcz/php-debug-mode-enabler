@@ -25,7 +25,6 @@ use RuntimeException;
 
 /**
  * @phpstan-type ParsedUrl array{'scheme'?: string, 'host'?: string, 'port'?: int, 'user'?: string, 'pass'?: string, 'path'?: string, 'query'?: string, 'fragment'?: string}
- * @phpstan-type ClaimsSet array{'iss': string, 'aud': string|null, 'iat': int, 'exp': int, 'sub': string, 'meth': array<int, string>, 'mod': int, 'val': int}
  */
 class SignedUrl implements Plugin
 {
@@ -243,7 +242,6 @@ class SignedUrl implements Plugin
     public function verifyToken(string $token): array
     {
         try {
-            /** @var ClaimsSet $payload */
             $payload = $this->jwt->decode($token);
         } catch (RuntimeException $e) {
             throw new SignedUrlVerificationException('JWT Token invalid', 0, $e);
@@ -364,7 +362,6 @@ class SignedUrl implements Plugin
     {
         $url['path'] = ($url['path'] ?? '') === '' ? '/' : ($url['path'] ?? '');
         unset($url['fragment']);
-        /** @var ParsedUrl $url (bypass PhpStan bug) */
         return $url;
     }
 }

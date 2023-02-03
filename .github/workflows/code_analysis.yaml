@@ -24,17 +24,18 @@ jobs:
           - "7.4"
           - "8.0"
           - "8.1"
+          - "8.2"
 
-        deps:
-          - name: Lowest deps
-            key: lowest
-            arg: --prefer-lowest
+        jwt:
+          - name: JWT 5
+            key: jtw5
+            arg: '"firebase/php-jwt:^5.0"'
 
-          - name: Current deps
-            key: current
-            arg: ''
+          - name: JWT 6
+            key: jwt6
+            arg: '"firebase/php-jwt:^6.0"'
 
-    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.deps.name }}
+    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.jwt.name }}
     runs-on: ubuntu-latest
 
     steps:
@@ -62,20 +63,19 @@ jobs:
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.deps.name }}
+          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.name }}
 
 
       - uses: actions/cache@v2
         with:
           path: |
             **/composer.lock
-          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.deps.name }}
+          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.key }}
 
 
       - name: Install Composer
-        run: composer update --no-progress ${{ matrix.deps.arg }}
+        run: composer update --no-progress --with ${{ matrix.jwt.arg }}
 
 
       - name: Run job
-        if: ${{ matrix.deps.key != 'lowest' && matrix.php != '8.1 }}
         run: ${{ matrix.actions.run }}

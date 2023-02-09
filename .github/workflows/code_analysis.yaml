@@ -4,8 +4,6 @@ name: Code Analysis
 on:
   pull_request:
   push:
-    branches:
-      - master
 
 
 jobs:
@@ -23,10 +21,20 @@ jobs:
         php:
           - "7.4"
           - "8.0"
+          - "8.1"
+          - "8.2"
 
-    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }}
+        jwt:
+          - name: JWT 5
+            key: jtw5
+            arg: '"firebase/php-jwt:^5.0"'
+
+          - name: JWT 6
+            key: jwt6
+            arg: '"firebase/php-jwt:^6.0"'
+
+    name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.jwt.name }}
     runs-on: ubuntu-latest
-
 
     steps:
       - name: Checkout
@@ -53,18 +61,19 @@ jobs:
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
+          key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.name }}
 
 
       - uses: actions/cache@v2
         with:
           path: |
             **/composer.lock
-          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}
+          key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.key }}
 
 
       - name: Install Composer
-        run: composer install --no-progress
+        run: composer update --no-progress --with ${{ matrix.jwt.arg }}
 
 
-      - run: ${{ matrix.actions.run }}
+      - name: Run job
+        run: ${{ matrix.actions.run }}

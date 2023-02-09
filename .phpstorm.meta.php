@@ -1,11 +1,10 @@
 <?php
 /**
  * The MIT License (MIT)
- * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ * Copyright (c) 2023 Redbit s.r.o., Jakub Bouček
  */
 
 namespace PHPSTORM_META {
-
     expectedArguments(
         \Redbitcz\DebugMode\Detector::__construct(),
         0,
@@ -29,7 +28,7 @@ namespace PHPSTORM_META {
     );
 
     expectedArguments(
-        \Redbitcz\DebugMode\Detector::detectProductionMode(),
+        \Redbitcz\DebugMode\Detector::detectProduction(),
         0,
         \Redbitcz\DebugMode\Detector::MODE_FULL,
         \Redbitcz\DebugMode\Detector::MODE_SIMPLE,
@@ -40,7 +39,7 @@ namespace PHPSTORM_META {
     );
 
     expectedArguments(
-        \Redbitcz\DebugMode\Plugin\SignedUrl::__construct(),
+        \Redbitcz\DebugMode\Plugin\SignedUrl::create(),
         1,
         'ES384',
         'ES256',

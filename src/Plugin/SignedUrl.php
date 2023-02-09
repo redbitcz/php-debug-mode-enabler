@@ -1,7 +1,11 @@
 <?php
+
 /**
  * The MIT License (MIT)
- * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ * Copyright (c) 2023 Redbit s.r.o., Jakub Bouček
+ *
+ * @noinspection PhpComposerExtensionStubsInspection OpenSSL only optional dependency
+ * @noinspection PhpElementIsNotAvailableInCurrentPhpVersionInspection PHP 7 compatibility
  */
 
 declare(strict_types=1);
@@ -9,15 +13,18 @@ declare(strict_types=1);
 namespace Redbitcz\DebugMode\Plugin;
 
 use DateTimeInterface;
-use Firebase\JWT\JWT;
 use LogicException;
 use Nette\Utils\DateTime;
+use OpenSSLAsymmetricKey;
+use OpenSSLCertificate;
 use Redbitcz\DebugMode\Detector;
+use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV5;
+use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV6;
+use Redbitcz\DebugMode\Plugin\JWT\JWTImpl;
 use RuntimeException;
 
 /**
  * @phpstan-type ParsedUrl array{'scheme'?: string, 'host'?: string, 'port'?: int, 'user'?: string, 'pass'?: string, 'path'?: string, 'query'?: string, 'fragment'?: string}
- * @phpstan-type ClaimsSet array{'iss': string, 'aud': string|null, 'iat': int, 'exp': int, 'sub': string, 'meth': array<int, string>, 'mod': int, 'val': int}
  */
 class SignedUrl implements Plugin
 {
@@ -37,26 +44,35 @@ class SignedUrl implements Plugin
     private const URL_QUERY_TOKEN_KEY = '_debug';
     private const ISSUER_ID = 'cz.redbit.debug.url';
 
-    /** @var resource|string */
-    private $key;
-    private string $algorithm;
     private ?string $audience;
     private ?int $timestamp;
 
+    private JWTImpl $jwt;
+
     /**
-     * @param string|resource $key The key.
-     * @param string $algorithm Supported algorithms are 'ES384','ES256', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', and 'RS512'
      * @param string|null $audience Recipient for which the JWT is intended
      */
-    public function __construct($key, string $algorithm = 'HS256', ?string $audience = null)
+    public function __construct(JWTImpl $jwt, ?string $audience = null)
     {
-        if (class_exists(JWT::class) === false) {
-            throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt');
+        $this->jwt = $jwt;
+        $this->audience = $audience;
+    }
+
+    /**
+     * @param string|resource|OpenSSLAsymmetricKey|OpenSSLCertificate $key The key.
+     * @param string $algorithm Supported algorithms are 'ES384','ES256', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', and 'RS512'
+     * @noinspection PhpRedundantVariableDocTypeInspection
+     */
+    public static function create($key, string $algorithm = 'HS256', ?string $audience = null): self
+    {
+        /** @var class-string<JWTImpl> $impl */
+        foreach ([JWTFirebaseV5::class, JWTFirebaseV6::class] as $impl) {
+            if ($impl::isAvailable()) {
+                return new self(new $impl($key, $algorithm), $audience);
+            }
         }
 
-        $this->key = $key;
-        $this->algorithm = $algorithm;
-        $this->audience = $audience;
+        throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ~5.0 or ~6.0');
     }
 
     /**
@@ -115,7 +131,7 @@ class SignedUrl implements Plugin
             'val' => $value,
         ];
 
-        return JWT::encode($payload, $this->key, $this->algorithm);
+        return $this->jwt->encode($payload);
     }
 
     public function __invoke(Detector $detector): ?bool
@@ -153,7 +169,7 @@ class SignedUrl implements Plugin
         $url = $url ?? $this->urlFromGlobal();
         $method = $method ?? $_SERVER['REQUEST_METHOD'];
 
-        [$allowedMethods, $mode, $value, $expires] = $this->verifyUrl($url);
+        [$allowedMethods, $mode, $value, $expires] = $this->verifyUrl($url, $allowRedirect);
 
         if (in_array(strtolower($method), $allowedMethods, true) === false) {
             throw new SignedUrlVerificationException('HTTP method doesn\'t match signed HTTP method');
@@ -226,8 +242,7 @@ class SignedUrl implements Plugin
     public function verifyToken(string $token): array
     {
         try {
-            /** @var ClaimsSet $payload */
-            $payload = JWT::decode($token, $this->key, [$this->algorithm]);
+            $payload = $this->jwt->decode($token);
         } catch (RuntimeException $e) {
             throw new SignedUrlVerificationException('JWT Token invalid', 0, $e);
         }
@@ -324,6 +339,11 @@ class SignedUrl implements Plugin
         $this->timestamp = $timestamp;
     }
 
+    public function getJwt(): JWTImpl
+    {
+        return $this->jwt;
+    }
+
     protected function sendRedirectResponse(string $canonicalUrl): void
     {
         header('Cache-Control: s-maxage=0, max-age=0, must-revalidate', true, 302);
@@ -342,7 +362,6 @@ class SignedUrl implements Plugin
     {
         $url['path'] = ($url['path'] ?? '') === '' ? '/' : ($url['path'] ?? '');
         unset($url['fragment']);
-        /** @var ParsedUrl $url (bypass PhpStan bug) */
         return $url;
     }
 }

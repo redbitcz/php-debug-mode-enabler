@@ -1,7 +1,7 @@
 <?php
 /**
  * The MIT License (MIT)
- * Copyright (c) 2022 Redbit s.r.o., Jakub Bouček
+ * Copyright (c) 2023 Redbit s.r.o., Jakub Bouček
  */
 
 declare(strict_types=1);
@@ -254,10 +254,10 @@ class Detector
      * @param string|null $tempDir Path to temp directory. Optional, but required when Enabler mode is enabled
      * @param bool|null $default Default value when no method matches
      */
-    public static function detectProductionMode(
+    public static function detectProduction(
         int $mode = self::MODE_SIMPLE,
         ?string $tempDir = null,
-        ?bool $default = false
+        ?bool $default = true
     ): ?bool {
         if (is_bool($default)) {
             $default = !$default;

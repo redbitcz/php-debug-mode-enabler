@@ -20,7 +20,7 @@ Package is optimized for invoking in very early lifecycle phase of your App
 ## Requirements
 Package requires:
 
-- PHP version 7.4, 8.0, 8.1 or 8.2
+- PHP version 8.0, 8.1, 8.2 or 8.3
 
 Enabler requires:
  

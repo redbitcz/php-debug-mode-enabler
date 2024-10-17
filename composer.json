@@ -24,7 +24,7 @@
         "nette/utils": "^3.0 || ^4.0"
     },
     "require-dev": {
-        "firebase/php-jwt": "^5.0 || ^6.0",
+        "firebase/php-jwt": "^5.0 || ^6.0 || dev-main",
         "nette/tester": "^2.5 || dev-master",
         "phpstan/phpstan": "1.12.6"
     },

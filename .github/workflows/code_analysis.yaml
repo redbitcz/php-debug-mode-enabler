@@ -4,6 +4,8 @@ name: Code Analysis
 on:
   pull_request:
   push:
+    branches:
+      - main
 
 
 jobs:
@@ -13,15 +15,17 @@ jobs:
       matrix:
         actions:
           - name: PHPStan
-            run: composer phpstan
+            run: composer run phpstan
 
           - name: Nette Tester
-            run: composer tester -- -C
+            run: composer run test -- -C
 
         php:
           - "8.0"
           - "8.1"
           - "8.2"
+          - "8.3"
+          - "8.4"
 
         jwt:
           - name: JWT 5
@@ -30,7 +34,9 @@ jobs:
 
           - name: JWT 6
             key: jwt6
-            arg: '"firebase/php-jwt:^6.0"'
+            # arg: '"firebase/php-jwt:^6.0"'
+            # Temporary solution until the stable JWT 6 with PHP 8.4 support is released
+            arg: '"firebase/php-jwt:dev-main"'
 
     name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.jwt.name }}
     runs-on: ubuntu-latest

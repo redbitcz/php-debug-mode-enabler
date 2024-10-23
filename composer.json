@@ -19,14 +19,14 @@
     ],
     "homepage": "https://github.com/redbitcz/php-debug-mode-enabler",
     "require": {
-        "php": "~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0",
+        "php": "~8.0",
         "ext-json": "*",
         "nette/utils": "^3.0 || ^4.0"
     },
     "require-dev": {
-        "firebase/php-jwt": "^5.0 || ^6.0",
-        "nette/tester": "2.5.1",
-        "phpstan/phpstan": "1.9.14"
+        "firebase/php-jwt": "^5.0 || ^6.0 || dev-main",
+        "nette/tester": "^2.5 || dev-master",
+        "phpstan/phpstan": "1.12.6"
     },
     "suggest": {
         "firebase/php-jwt": "Optional, required for SignedUrl plugin, compatible with version 5.x and 6.x"
@@ -46,6 +46,6 @@
     },
     "scripts": {
         "phpstan": "phpstan analyze -c phpstan.neon --level 5",
-        "tester": "tester tests"
+        "test": "tester tests"
     }
 }

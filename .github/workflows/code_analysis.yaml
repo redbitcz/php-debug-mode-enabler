@@ -13,10 +13,10 @@ jobs:
       matrix:
         actions:
           - name: PHPStan
-            run: composer phpstan
+            run: composer run phpstan
 
           - name: Nette Tester
-            run: composer tester -- -C
+            run: composer run test -- -C
 
         php:
           - "8.0"

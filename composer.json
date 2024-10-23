@@ -46,6 +46,6 @@
     },
     "scripts": {
         "phpstan": "phpstan analyze -c phpstan.neon --level 5",
-        "tester": "tester tests"
+        "test": "tester tests"
     }
 }

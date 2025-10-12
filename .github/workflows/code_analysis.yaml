@@ -26,6 +26,7 @@ jobs:
           - "8.2"
           - "8.3"
           - "8.4"
+          - "8.5"
 
         jwt:
           - name: JWT 5
@@ -43,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
 
       # see https://github.com/shivammathur/setup-php
@@ -62,14 +63,14 @@ jobs:
           echo "::set-output name=dir::$(composer config cache-files-dir)"
 
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.name }}
 
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: |
             **/composer.lock

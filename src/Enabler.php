@@ -249,7 +249,8 @@ class Enabler
     }
 
     /**
-     * @return array<int, string|array>
+     * @return array<int, array>
+     * @phpstan-return list{string, array}
      */
     private function generateToken(bool $value, int $expires): array
     {

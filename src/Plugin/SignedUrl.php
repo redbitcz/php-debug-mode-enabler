@@ -58,11 +58,13 @@ class SignedUrl implements Plugin
     }
 
     /**
-     * @param string|resource|OpenSSLAsymmetricKey|OpenSSLCertificate $key The key.
      * @param string $algorithm Supported algorithms are 'ES384','ES256', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', and 'RS512'
      */
-    public static function create($key, string $algorithm = 'HS256', ?string $audience = null): self
-    {
+    public static function create(
+        string|OpenSSLAsymmetricKey|OpenSSLCertificate $key,
+        string $algorithm = 'HS256',
+        ?string $audience = null
+    ): self {
         /** @var class-string<JWTImpl> $impl */
         foreach ([JWTFirebaseV7::class] as $impl) {
             if ($impl::isAvailable()) {

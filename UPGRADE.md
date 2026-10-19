@@ -74,3 +74,10 @@ Constants in Detector and SignedUrl now use PascalCase, without legacy aliases.
 Update references such as `Detector::MODE_FULL` to `Detector::ModeFull`,
 `Detector::DEBUG_ENV_NAME` to `Detector::DebugEnvName`, and
 `SignedUrl::VALUE_ENABLE` to `SignedUrl::ValueEnable`. Values are unchanged.
+
+## JWT key types
+
+`SignedUrl::create()` and `JWTFirebaseV7` now declare the key type natively as
+`string|OpenSSLAsymmetricKey|OpenSSLCertificate`, matching JWT's supported key material.
+Legacy resource keys are no longer accepted. PHP 8 OpenSSL functions return key and
+certificate objects instead of resources.

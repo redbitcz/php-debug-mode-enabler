@@ -90,6 +90,39 @@ class SignUrlTest extends TestCase
         }
     }
 
+    public function testRsaKeyObjects(): void
+    {
+        if (!extension_loaded('openssl')) {
+            $this->skip('OpenSSL is required for RSA key objects');
+        }
+        $privateKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        Assert::type(\OpenSSLAsymmetricKey::class, $privateKey);
+        $details = openssl_pkey_get_details($privateKey);
+        $publicKey = openssl_pkey_get_public($details['key']);
+        Assert::type(\OpenSSLAsymmetricKey::class, $publicKey);
+
+        $signer = SignedUrl::create($privateKey, 'RS256', 'test.keys');
+        $verifier = SignedUrl::create($publicKey, 'RS256', 'test.keys');
+        $expires = time() + 60;
+        $url = $signer->signUrl('https://host.tld/path', $expires);
+        Assert::same([['get'], SignedUrl::ModeRequest, SignedUrl::ValueEnable, $expires], $verifier->verifyUrl($url));
+    }
+
+    public function testResourceKeyRejected(): void
+    {
+        $resource = fopen('php://memory', 'r+');
+        try {
+            Assert::exception(static function () use ($resource) {
+                SignedUrl::create($resource);
+            }, \TypeError::class);
+            Assert::exception(static function () use ($resource) {
+                new JWTFirebaseV7($resource);
+            }, \TypeError::class);
+        } finally {
+            fclose($resource);
+        }
+    }
+
     public function testShortKey(): void
     {
         $plugin = SignedUrl::create('too-short', 'HS256');

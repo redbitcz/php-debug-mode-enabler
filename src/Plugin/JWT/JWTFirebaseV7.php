@@ -20,16 +20,13 @@ use stdClass;
 
 class JWTFirebaseV7 implements JWTImpl
 {
-    /** @var OpenSSLAsymmetricKey|OpenSSLCertificate|resource|string */
-    protected $key;
+    protected string|OpenSSLAsymmetricKey|OpenSSLCertificate $key;
     protected string $algorithm;
 
-    /**
-     * @param OpenSSLAsymmetricKey|OpenSSLCertificate|resource|string $key
-     * @param string $algorithm
-     */
-    public function __construct($key, string $algorithm = 'HS256')
-    {
+    public function __construct(
+        string|OpenSSLAsymmetricKey|OpenSSLCertificate $key,
+        string $algorithm = 'HS256'
+    ) {
         $this->key = $key;
         $this->algorithm = $algorithm;
     }

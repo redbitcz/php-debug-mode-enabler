@@ -42,7 +42,7 @@ composer run test -- -C
 composer run phpstan
 ```
 
-`-C` keeps the active PHP configuration for Tester. PHPStan analyzes `src/` at level 5; The JWT adapter directory still has a legacy exclusion from the former multi-version integration. Review existing exclusions and suppressions before changing analysis configuration.
+`-C` keeps the active PHP configuration for Tester. PHPStan analyzes `src/` at level 5; JWT adapters are included in analysis. Review existing exclusions and suppressions before changing analysis configuration.
 
 If a sandbox prevents PHPStan from opening its parallel-worker socket, run `composer run phpstan -- --debug` to analyze without parallel workers.
 
@@ -53,3 +53,5 @@ CI runs tests and PHPStan separately against Firebase JWT v7. The PHP matrix tar
 Preserve both Composer download-cache and `composer.lock` caching in CI; retaining the lock cache is an intentional project requirement for CI performance. Apply workflow maintenance in separate commits, push each step, and wait for its CI result before proceeding to the next step.
 
 Keep SignedUrl URL parsing, canonicalization, and redirect behavior unchanged unless explicitly requested: small changes have historically had significant consequences. The audience is intentionally optional; do not make it mandatory. Distinguish Detector mode validation from the modes carried by signed tokens.
+
+Prefer native parameter, property, and return types, including straightforward unions. Avoid expanding complex array-shape annotations solely to increase the PHPStan level. Level 6 was evaluated after the JWT migration: Enabler storage/list array types remain the main obstacle; level 5 is retained.

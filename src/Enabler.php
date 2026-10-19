@@ -41,8 +41,7 @@ class Enabler
         $this->tempDir = $tempDir;
     }
 
-    /** @return static */
-    public function setSecure(bool $secure = true): self
+    public function setSecure(bool $secure = true): static
     {
         $this->cookieOptions['secure'] = $secure;
 
@@ -55,17 +54,14 @@ class Enabler
         return $this;
     }
 
-    /**
-     * @return $this
-     * @see setcookie()
-     */
+    /** @see setcookie() */
     public function setCookieOptions(
         ?string $path = null,
         ?string $domain = null,
         ?bool $secure = null,
         ?bool $httponly = null,
         ?string $samesite = null
-    ): self {
+    ): static {
         $this->cookieOptions = [
             'path' => $path ?? $this->cookieOptions['path'],
             'domain' => $domain ?? $this->cookieOptions['domain'],
@@ -198,7 +194,7 @@ class Enabler
         $id = $this->getIdByName($name);
         $list = array_filter(
             $list,
-            static function ($token) use ($id) {
+            static function (array $token) use ($id): bool {
                 return $token['id'] !== $id;
             }
         );
@@ -212,7 +208,7 @@ class Enabler
         // Filter invalid and expired tokens
         $list = array_filter(
             $list,
-            function ($token) {
+            function (array $token): bool {
                 return $this->isTokenValid($token);
             }
         );

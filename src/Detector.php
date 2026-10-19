@@ -43,7 +43,7 @@ class Detector
     /** @var string[] */
     private array $ips = ['::1', '127.0.0.1'];
 
-    /** @var array<int, callable> */
+    /** @var array<int, callable(Detector): ?bool> */
     private array $detections;
 
     /**
@@ -188,9 +188,8 @@ class Detector
 
     /**
      * Set client IP address with allowed Debug mode
-     * @return static
      */
-    public function setAllowedIp(string ...$ips): self
+    public function setAllowedIp(string ...$ips): static
     {
         $this->ips = $ips;
         return $this;
@@ -198,23 +197,20 @@ class Detector
 
     /**
      * Add client IP address with allowed Debug mode
-     * @return static
      */
-    public function addAllowedIp(string ...$ips): self
+    public function addAllowedIp(string ...$ips): static
     {
         $this->ips = array_merge($this->ips, $ips);
         return $this;
     }
 
-    /** @return static */
-    public function prependPlugin(Plugin $plugin): self
+    public function prependPlugin(Plugin $plugin): static
     {
         array_unshift($this->detections, $plugin);
         return $this;
     }
 
-    /** @return static */
-    public function appendPlugin(Plugin $plugin): self
+    public function appendPlugin(Plugin $plugin): static
     {
         $this->detections[] = $plugin;
         return $this;

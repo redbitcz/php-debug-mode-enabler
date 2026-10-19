@@ -49,6 +49,7 @@ class JWTFirebaseV7 implements JWTImpl
         return JWT::decode($jwt, new Key($this->key, $this->algorithm));
     }
 
+    /** @param array<string, mixed> $payload */
     public function encode(array $payload): string
     {
         return JWT::encode($payload, $this->key, $this->algorithm);

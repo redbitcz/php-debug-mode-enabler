@@ -24,7 +24,7 @@ require __DIR__ . '/bootstrap.php';
 
 class DetectorTest extends TestCase
 {
-    private const TempDir = __DIR__ . '/temp/enabler';
+    private const string TempDir = __DIR__ . '/temp/enabler';
 
     protected function setUp(): void
     {
@@ -128,10 +128,8 @@ class DetectorTest extends TestCase
 
     /**
      * @dataProvider getEnvDataProvider
-     * @param $testValue
-     * @param $expected
      */
-    public function testEnv($testValue, $expected): void
+    public function testEnv(?string $testValue, ?bool $expected): void
     {
         putenv(sprintf('%s%s%s', Detector::DebugEnvName, $testValue === null ? '' : '=', $testValue));
 
@@ -157,10 +155,8 @@ class DetectorTest extends TestCase
 
     /**
      * @dataProvider getCookieDataProvider
-     * @param $testValue
-     * @param $expected
      */
-    public function testCookie($testValue, $expected): void
+    public function testCookie(string|int|null $testValue, ?bool $expected): void
     {
         if ($testValue !== null) {
             $_COOKIE[Detector::DebugCookieName] = $testValue;
@@ -185,10 +181,8 @@ class DetectorTest extends TestCase
 
     /**
      * @dataProvider getIpDataProvider
-     * @param $testValue
-     * @param $expected
      */
-    public function testIp($testValue, $expected): void
+    public function testIp(string $testValue, ?bool $expected): void
     {
         unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_FORWARDED'], $_SERVER['HTTP_X_REAL_IP']);
         $_SERVER['REMOTE_ADDR'] = $testValue;
@@ -216,7 +210,7 @@ class DetectorTest extends TestCase
     /**
      * @dataProvider getSettedIpDataProvider
      */
-    public function testSettedIp(array $setIp, $testValue, $expected): void
+    public function testSettedIp(array $setIp, string $testValue, ?bool $expected): void
     {
         unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_FORWARDED']);
         $_SERVER['REMOTE_ADDR'] = $testValue;
@@ -244,7 +238,7 @@ class DetectorTest extends TestCase
     /**
      * @dataProvider getAddedIpDataProvider
      */
-    public function testAddedIp(array $setIp, $testValue, $expected): void
+    public function testAddedIp(array $setIp, string $testValue, ?bool $expected): void
     {
         unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_FORWARDED']);
         $_SERVER['REMOTE_ADDR'] = $testValue;
@@ -266,9 +260,8 @@ class DetectorTest extends TestCase
 
     /**
      * @dataProvider getEnablerDataProvider
-     * @param $testValue
      */
-    public function testEnabler($testValue): void
+    public function testEnabler(bool $testValue): void
     {
         $detector = new Detector(Detector::ModeFull, new Enabler(self::TempDir));
         $detector->getEnabler()->override($testValue);

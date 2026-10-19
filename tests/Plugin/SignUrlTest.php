@@ -25,7 +25,7 @@ require __DIR__ . '/../bootstrap.php';
 
 class SignUrlTest extends TestCase
 {
-    private const KeyHs256 = "zhYiojmp7O3VYQNuW0C5rS0VgFNgoAvuxW4IdS/0tn8";
+    private const string KeyHs256 = "zhYiojmp7O3VYQNuW0C5rS0VgFNgoAvuxW4IdS/0tn8";
 
 
     public function testAdapter(): void

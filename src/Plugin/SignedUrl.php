@@ -76,12 +76,11 @@ class SignedUrl implements Plugin
     }
 
     /**
-     * @param string|int|DateTimeInterface $expire
      * @param array<int, string> $allowedHttpMethods
      */
     public function signUrl(
         string $url,
-        $expire,
+        string|int|DateTimeInterface $expire,
         int $mode = self::ModeRequest,
         int $value = self::ValueEnable,
         array $allowedHttpMethods = ['get']
@@ -109,12 +108,11 @@ class SignedUrl implements Plugin
 
     /**
      * @param array<int, string> $allowedMethods
-     * @param string|int|DateTimeInterface $expire
      */
     public function getToken(
         string $url,
         array $allowedMethods,
-        $expire,
+        string|int|DateTimeInterface $expire,
         int $mode,
         int $value
     ): string {

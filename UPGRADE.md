@@ -81,3 +81,11 @@ Update references such as `Detector::MODE_FULL` to `Detector::ModeFull`,
 `string|OpenSSLAsymmetricKey|OpenSSLCertificate`, matching JWT's supported key material.
 Legacy resource keys are no longer accepted. PHP 8 OpenSSL functions return key and
 certificate objects instead of resources.
+
+## Native type declarations
+
+Expiration arguments in `Enabler::activate()`, `SignedUrl::signUrl()`, and
+`SignedUrl::getToken()` now enforce their documented `string|int|DateTimeInterface`
+types (`activate()` also accepts `null`). Fluent setters now declare `static`
+return types instead of expressing that contract only in PHPDoc. Update subclass
+overrides to match these signatures.

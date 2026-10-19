@@ -123,6 +123,48 @@ class SignUrlTest extends TestCase
         }
     }
 
+    public function testMalformedJsonThroughDetector(): void
+    {
+        $originalGet = $_GET;
+        $originalServer = $_SERVER;
+        try {
+            $_GET['_debug'] = 'eA.e30.eA';
+            $_SERVER['HTTP_HOST'] = 'host.tld';
+            $_SERVER['REQUEST_URI'] = '/?_debug=eA.e30.eA';
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_SERVER['HTTPS'] = 'on';
+            $plugin = SignedUrl::create(self::KeyHs256);
+            $detector = new \Redbitcz\DebugMode\Detector(0);
+            $detector->appendPlugin($plugin);
+            Assert::null($detector->resolve());
+            Assert::false($detector->isDebugMode());
+            Assert::exception(static function () use ($plugin) {
+                $plugin->verifyToken('eA.e30.eA');
+            }, SignedUrlVerificationException::class);
+            $detector->appendPlugin(new class implements \Redbitcz\DebugMode\Plugin\Plugin {
+                public function __invoke(\Redbitcz\DebugMode\Detector $detector): ?bool
+                {
+                    return true;
+                }
+            });
+            Assert::true($detector->resolve());
+            Assert::true($detector->isDebugMode());
+        } finally {
+            $_GET = $originalGet;
+            $_SERVER = $originalServer;
+        }
+    }
+
+    public function testInvalidVerificationKeyIsNotIgnored(): void
+    {
+        $token = SignedUrl::create(self::KeyHs256)->getToken(
+            'https://host.tld/', ['get'], time() + 60, SignedUrl::ModeRequest, SignedUrl::ValueEnable
+        );
+        Assert::exception(static function () use ($token) {
+            SignedUrl::create('short')->verifyToken($token);
+        }, \DomainException::class);
+    }
+
     public function testShortKey(): void
     {
         $plugin = SignedUrl::create('too-short', 'HS256');

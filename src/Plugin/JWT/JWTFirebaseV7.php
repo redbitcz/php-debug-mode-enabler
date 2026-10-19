@@ -12,11 +12,13 @@ declare(strict_types=1);
 namespace Redbitcz\DebugMode\Plugin\JWT;
 
 use Composer\InstalledVersions;
+use DomainException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
 use stdClass;
+use UnexpectedValueException;
 
 class JWTFirebaseV7 implements JWTImpl
 {
@@ -46,7 +48,21 @@ class JWTFirebaseV7 implements JWTImpl
 
     public function decode(string $jwt): stdClass
     {
-        return JWT::decode($jwt, new Key($this->key, $this->algorithm));
+        try {
+            return JWT::decode($jwt, new Key($this->key, $this->algorithm));
+        } catch (DomainException $e) {
+            // Firebase reports malformed input as DomainException (a LogicException),
+            // just like key configuration errors. Normalize only malformed JSON to a
+            // RuntimeException so SignedUrl silently returns null and detection continues.
+            // Revalidate only on failure to avoid relying on the library's error messages;
+            // genuine configuration errors must still propagate.
+            foreach (array_slice(explode('.', $jwt), 0, 2) as $segment) {
+                if (!json_validate(JWT::urlsafeB64Decode($segment))) {
+                    throw new UnexpectedValueException('Invalid JSON in JWT token', 0, $e);
+                }
+            }
+            throw $e;
+        }
     }
 
     /** @param array<string, mixed> $payload */

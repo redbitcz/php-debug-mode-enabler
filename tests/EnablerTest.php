@@ -42,6 +42,25 @@ class EnablerTest extends TestCase
         FileSystem::delete($this->tempDir);
     }
 
+    public function getInvalidStorage(): array
+    {
+        return [['null'], ['true'], ['42'], ['"invalid"']];
+    }
+
+    /** @dataProvider getInvalidStorage */
+    public function testInvalidStorage(string $json): void
+    {
+        FileSystem::write($this->tempDir . '/debug/token.bin', $json);
+        $_COOKIE['app-debug-token'] = 'unknown-token';
+        $enabler = new Enabler($this->tempDir);
+        Assert::null($enabler->isDebug());
+        $enabler->activate(true);
+        $_COOKIE[self::$cookie[0]] = self::$cookie[1];
+        Assert::true((new Enabler($this->tempDir))->isDebug());
+        $enabler->deactivate();
+        Assert::null((new Enabler($this->tempDir))->isDebug());
+    }
+
     public function testCookieSetterComposition(): void
     {
         $enabler = new Enabler($this->tempDir);

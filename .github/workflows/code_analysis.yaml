@@ -55,14 +55,14 @@ jobs:
           echo "::set-output name=dir::$(composer config cache-files-dir)"
 
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.name }}
 
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             **/composer.lock

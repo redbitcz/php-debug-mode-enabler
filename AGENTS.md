@@ -47,7 +47,7 @@ composer run phpstan
 
 If a sandbox prevents PHPStan from opening its parallel-worker socket, run `composer run phpstan -- --debug` to analyze without parallel workers.
 
-Tests use `Tester\TestCase`, `@testCase`, data providers, and a final `(new ...())->run()` call. Preserve method isolation when tests manipulate environment variables, superglobals, or `JWT::$timestamp`. Existing Detector tests purge `tests/temp/enabler`.
+Tests use `Tester\TestCase`, `@testCase`, data providers, and a final `(new ...())->run()` call. Preserve method isolation when tests manipulate environment variables, superglobals, or `JWT::$timestamp`. Existing Detector tests purge `tests/temp/enabler`. The dedicated `tests/EnablerTest.php` suite uses a unique system temporary directory per test, passed to the existing constructor, and deletes only that directory. A namespaced `setcookie()` spy captures cookie output in its isolated test process. `tests/Plugin/SignedUrlNegativeTest.php` covers invalid tokens through Detector and restores request globals and the JWT clock.
 
 CI runs tests and PHPStan separately against Firebase JWT v7. The PHP matrix targets 8.3, 8.4, 8.5, and 8.6. Check the current workflow before changing compatibility claims.
 

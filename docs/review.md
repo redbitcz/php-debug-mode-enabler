@@ -3,7 +3,7 @@
 Reviewed commit: `7917a42`. Its GitHub Actions run succeeded:
 https://github.com/redbitcz/php-debug-mode-enabler/actions/runs/39274172583
 
-The current suite has 39 tests and PHPStan level 5 includes JWT adapters. The
+The reviewed baseline suite had 39 tests and PHPStan level 5 includes JWT adapters. The
 following focused reproductions were run separately on PHP 8.5 with JWT 7.2.1,
 using temporary storage outside the repository. No production code was changed.
 
@@ -52,3 +52,37 @@ caching, or replace the extensible JWT adapter interface. Keep PHPStan level 5
 unless more precise Enabler data types are justified by actual maintenance needs.
 Legacy PHP 7 inspection suppressions and stale documentation wording can be cleaned
 up separately; these are not release blockers.
+
+## Follow-up implementation
+
+The four recommended fixes were implemented independently on
+`codex/major-release-fixes`:
+
+- `4bad0ca`: normalize malformed JWT JSON failures in the v7 adapter while preserving
+  key configuration errors.
+- `9180b17`: preserve an absent SameSite option when composing cookie setters.
+- `9a6e5df`: reject non-array storage values. Individual token validity remains checked
+  during lookup; reading deliberately does not filter entries or remove expired tokens.
+- `ccf142e`: run push CI on `master`; Composer lock caching is unchanged.
+
+The expanded suite has 52 Tester tests (provider cases execute within their test
+method). Negative JWT coverage exercises Detector with a positive control followed
+by invalid encoding, JSON, signatures, tampering, expiry, future issue time,
+audience, issuer, mode/value, missing expiry, method and URL mismatches. An omitted
+audience remains accepted when no audience is configured.
+
+Enabler tests use a unique random system temporary directory per test via the
+existing constructor, restore incoming cookies and delete only that owned directory.
+No persistence-path API change is necessary. They use real filesystem storage and a
+namespaced cookie spy; they do not test a browser's enforcement of cookie attributes.
+Coverage includes cross-instance persistence, revocation, independent browsers,
+expiry, forged tokens, non-array storage and malformed JSON, recovery, setter composition and
+same-request mode/cookie behavior.
+
+Same-request orphan-token cleanup and transaction-level locking remain deferred.
+The lifecycle test deliberately checks the final mode and cookie without treating
+orphaned storage records as correct behavior. No URL processing behavior changed.
+
+Storage read policy: temporary storage is expected to be cleaned externally. Do not
+add token validation or expiry filtering to reads. The existing write-time filtering
+is unchanged; lookup validates the matching token in `getListTokenValue()`.

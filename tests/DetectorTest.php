@@ -24,12 +24,12 @@ require __DIR__ . '/bootstrap.php';
 
 class DetectorTest extends TestCase
 {
-    private const TEMP_DIR = __DIR__ . '/temp/enabler';
+    private const TempDir = __DIR__ . '/temp/enabler';
 
     protected function setUp(): void
     {
-        @mkdir(self::TEMP_DIR, 0777, true);
-        Helpers::purge(self::TEMP_DIR);
+        @mkdir(self::TempDir, 0777, true);
+        Helpers::purge(self::TempDir);
     }
 
     public function testUndecidedDefaultsToProduction(): void
@@ -73,13 +73,13 @@ class DetectorTest extends TestCase
     /** @dataProvider getDecisionProvider */
     public function testStaticDecision(?bool $decision): void
     {
-        $original = getenv(Detector::DEBUG_ENV_NAME);
-        putenv(Detector::DEBUG_ENV_NAME . ($decision === null ? '' : '=' . (int)$decision));
+        $original = getenv(Detector::DebugEnvName);
+        putenv(Detector::DebugEnvName . ($decision === null ? '' : '=' . (int)$decision));
         try {
-            Assert::same($decision ?? false, Detector::detect(Detector::MODE_ENV));
-            Assert::same(!($decision ?? false), Detector::detectProduction(Detector::MODE_ENV));
+            Assert::same($decision ?? false, Detector::detect(Detector::ModeEnv));
+            Assert::same(!($decision ?? false), Detector::detectProduction(Detector::ModeEnv));
         } finally {
-            putenv(Detector::DEBUG_ENV_NAME . ($original === false ? '' : '=' . $original));
+            putenv(Detector::DebugEnvName . ($original === false ? '' : '=' . $original));
         }
     }
 
@@ -106,9 +106,9 @@ class DetectorTest extends TestCase
                 Detector::$method(default: null);
             }, \Error::class, 'Unknown named parameter $default');
             Assert::exception(static function () use ($method) {
-                Detector::$method(Detector::MODE_FULL);
+                Detector::$method(Detector::ModeFull);
             }, InconsistentEnablerModeException::class);
-            Assert::same($method === 'detectProduction', Detector::$method(Detector::MODE_ENABLER, self::TEMP_DIR));
+            Assert::same($method === 'detectProduction', Detector::$method(Detector::ModeEnabler, self::TempDir));
         }
     }
 
@@ -133,7 +133,7 @@ class DetectorTest extends TestCase
      */
     public function testEnv($testValue, $expected): void
     {
-        putenv(sprintf('%s%s%s', Detector::DEBUG_ENV_NAME, $testValue === null ? '' : '=', $testValue));
+        putenv(sprintf('%s%s%s', Detector::DebugEnvName, $testValue === null ? '' : '=', $testValue));
 
         $detector = new Detector();
         Assert::equal($expected, $detector->isDebugModeByEnv());
@@ -163,7 +163,7 @@ class DetectorTest extends TestCase
     public function testCookie($testValue, $expected): void
     {
         if ($testValue !== null) {
-            $_COOKIE[Detector::DEBUG_COOKIE_NAME] = $testValue;
+            $_COOKIE[Detector::DebugCookieName] = $testValue;
         }
 
         $detector = new Detector();
@@ -270,7 +270,7 @@ class DetectorTest extends TestCase
      */
     public function testEnabler($testValue): void
     {
-        $detector = new Detector(Detector::MODE_FULL, new Enabler(self::TEMP_DIR));
+        $detector = new Detector(Detector::ModeFull, new Enabler(self::TempDir));
         $detector->getEnabler()->override($testValue);
         Assert::equal($testValue, $detector->isDebugModeByEnabler());
     }
@@ -278,14 +278,14 @@ class DetectorTest extends TestCase
     public function testMissingEnablerMode(): void
     {
         Assert::exception(static function () {
-            new Detector(Detector::MODE_FULL);
+            new Detector(Detector::ModeFull);
         }, InconsistentEnablerModeException::class);
     }
 
     public function testMissingEnabler(): void
     {
         Assert::exception(static function () {
-            $detector = new Detector(Detector::MODE_SIMPLE);
+            $detector = new Detector(Detector::ModeSimple);
             $detector->getEnabler();
         }, InconsistentEnablerModeException::class);
     }
@@ -293,7 +293,7 @@ class DetectorTest extends TestCase
     public function testMissingEnablerShortcut(): void
     {
         Assert::exception(static function () {
-            Detector::detect(Detector::MODE_FULL);
+            Detector::detect(Detector::ModeFull);
         }, InconsistentEnablerModeException::class);
     }
 

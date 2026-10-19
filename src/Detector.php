@@ -14,28 +14,28 @@ use Redbitcz\DebugMode\Plugin\Plugin;
 class Detector
 {
     /** Name of Environment variable used to detect Debug mode */
-    public const DEBUG_ENV_NAME = 'APP_DEBUG';
+    public const string DebugEnvName = 'APP_DEBUG';
 
     /** Name of Cookie used to detect Debug mode */
-    public const DEBUG_COOKIE_NAME = 'app-debug-mode';
+    public const string DebugCookieName = 'app-debug-mode';
 
     /** Enables Debug mode detection by client IP */
-    public const MODE_IP = 0b0001;
+    public const int ModeIp = 0b0001;
 
     /** Enables Debug mode detection by PHP process Environment variable */
-    public const MODE_ENV = 0b0010;
+    public const int ModeEnv = 0b0010;
 
     /** Enables Debug mode detection by request Cookie */
-    public const MODE_COOKIE = 0b0100;
+    public const int ModeCookie = 0b0100;
 
     /** Enables Debug mode detection by Enabler */
-    public const MODE_ENABLER = 0b1000;
+    public const int ModeEnabler = 0b1000;
 
     /** Simple mode without Enabler */
-    public const MODE_SIMPLE = self::MODE_COOKIE | self::MODE_ENV | self::MODE_IP;
+    public const int ModeSimple = self::ModeCookie | self::ModeEnv | self::ModeIp;
 
     /** Full mode with Enabler  */
-    public const MODE_FULL = self::MODE_ENABLER | self::MODE_SIMPLE;
+    public const int ModeFull = self::ModeEnabler | self::ModeSimple;
 
 
     private Enabler $enabler;
@@ -50,9 +50,9 @@ class Detector
      * @param int $mode Enables methods which is used to detect Debug mode
      * @param Enabler|null $enabler Enabler instance. Optional, but required when Enabler mode is enabled
      */
-    public function __construct(int $mode = self::MODE_SIMPLE, ?Enabler $enabler = null)
+    public function __construct(int $mode = self::ModeSimple, ?Enabler $enabler = null)
     {
-        if ($enabler === null && $mode & self::MODE_ENABLER) {
+        if ($enabler === null && $mode & self::ModeEnabler) {
             throw new InconsistentEnablerModeException(
                 'Enabler mode (and Full mode) requires the Enabler instance in constructor'
             );
@@ -60,10 +60,10 @@ class Detector
 
         $this->detections = array_filter(
             [
-                $mode & self::MODE_ENABLER ? [$this, 'isDebugModeByEnabler'] : null,
-                $mode & self::MODE_COOKIE ? [$this, 'isDebugModeByCookie'] : null,
-                $mode & self::MODE_ENV ? [$this, 'isDebugModeByEnv'] : null,
-                $mode & self::MODE_IP ? [$this, 'isDebugModeByIp'] : null,
+                $mode & self::ModeEnabler ? [$this, 'isDebugModeByEnabler'] : null,
+                $mode & self::ModeCookie ? [$this, 'isDebugModeByCookie'] : null,
+                $mode & self::ModeEnv ? [$this, 'isDebugModeByEnv'] : null,
+                $mode & self::ModeIp ? [$this, 'isDebugModeByIp'] : null,
             ]
         );
 
@@ -141,7 +141,7 @@ class Detector
      */
     public function isDebugModeByCookie(): ?bool
     {
-        $cookieValue = $_COOKIE[self::DEBUG_COOKIE_NAME] ?? null;
+        $cookieValue = $_COOKIE[self::DebugCookieName] ?? null;
         if (is_numeric($cookieValue) && (int)$cookieValue === 0) {
             return false;
         }
@@ -158,7 +158,7 @@ class Detector
      */
     public function isDebugModeByEnv(): ?bool
     {
-        $envValue = getenv(self::DEBUG_ENV_NAME);
+        $envValue = getenv(self::DebugEnvName);
         if ($envValue !== false && is_numeric($envValue) && in_array((int)$envValue, [0, 1], true)) {
             return (int)$envValue === 1;
         }
@@ -226,7 +226,7 @@ class Detector
      * @param int $mode Enabled detection methods
      * @param string|null $tempDir Required when Enabler mode is enabled
      */
-    public static function detect(int $mode = self::MODE_SIMPLE, ?string $tempDir = null): bool
+    public static function detect(int $mode = self::ModeSimple, ?string $tempDir = null): bool
     {
         if (func_num_args() > 2) {
             throw new ArgumentCountError(__METHOD__ . ' no longer accepts a default; use resolve() on an instance instead');
@@ -241,7 +241,7 @@ class Detector
      * @param int $mode Enabled detection methods
      * @param string|null $tempDir Required when Enabler mode is enabled
      */
-    public static function detectProduction(int $mode = self::MODE_SIMPLE, ?string $tempDir = null): bool
+    public static function detectProduction(int $mode = self::ModeSimple, ?string $tempDir = null): bool
     {
         if (func_num_args() > 2) {
             throw new ArgumentCountError(__METHOD__ . ' no longer accepts a default; use resolve() on an instance instead');
@@ -252,7 +252,7 @@ class Detector
 
     private static function createDetector(int $mode, ?string $tempDir): self
     {
-        if ($tempDir === null && $mode & self::MODE_ENABLER) {
+        if ($tempDir === null && $mode & self::ModeEnabler) {
             throw new InconsistentEnablerModeException('Enabler mode (and Full mode) requires \'tempDir\' argument');
         }
 

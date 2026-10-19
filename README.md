@@ -95,10 +95,11 @@ Please use it with great caution only! Wrong use might cause critical security i
 Enabler provide feature to force enable or disable Debug Mode anywhere for user's browser (drived by Cookie).
 
 This example turn on Debug Mode for user's browser:
+
 ```php
 $enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
 
-$detector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::MODE_FULL, $enabler);
+$detector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::ModeFull, $enabler);
 
 $enabler->activate(true);
 ```
@@ -119,10 +120,11 @@ At most cases this example creates second instance of `Enabler` class because fi
 internally with `Detector` instance in `Bootstrap`.
 
 To re-use already existing instance you can inject it to DI Container:
+
 ```php
 $tempDir = __DIR__ . '/../temp';
 $enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
-$debugModeDetector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::MODE_FULL, $enabler);
+$debugModeDetector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::ModeFull, $enabler);
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());

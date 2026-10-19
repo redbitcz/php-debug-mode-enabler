@@ -31,7 +31,7 @@ See [architecture and validation notes](docs/architecture.md) for behavior detai
 - Firebase JWT is optional at runtime and required for SignedUrl. Only v7 is supported by the built-in adapter; it is a development dependency for tests. Keep `JWTImpl` and adapter selection extensible for future major versions. Do not add a package-wide conflict with older JWT versions: Detector users may need them for unrelated features.
 - PSR-4 maps `Redbitcz\DebugMode\` to `src/` and `Redbitcz\DebugModeTests\` to `tests/`.
 - Follow existing style: strict types, four spaces, typed properties and signatures, PHPDoc for array shapes and compatibility-dependent types, braces on separate lines for classes and methods.
-- Preserve existing public constant names and early-bootstrap independence. `resolve()` and individual rules/plugins return `?bool`; the four main detection methods return `bool` with production as the undecided fallback and reject removed fallback arguments. This is not a Nette application despite its Nette utility and test dependencies.
+- Use PascalCase for project constants; preserve their values and early-bootstrap independence. `resolve()` and individual rules/plugins return `?bool`; the four main detection methods return `bool` with production as the undecided fallback and reject removed fallback arguments. This is not a Nette application despite its Nette utility and test dependencies.
 - `vendor/`, `composer.lock`, test output, `tests/lock`, and `tests/temp` are ignored. Do not commit installed dependencies or generated test artifacts.
 
 ## Development checks
@@ -51,3 +51,5 @@ Tests use `Tester\TestCase`, `@testCase`, data providers, and a final `(new ...(
 CI runs tests and PHPStan separately against Firebase JWT v7. The PHP matrix targets 8.3, 8.4, 8.5, and 8.6. Check the current workflow before changing compatibility claims.
 
 Preserve both Composer download-cache and `composer.lock` caching in CI; retaining the lock cache is an intentional project requirement for CI performance. Apply workflow maintenance in separate commits, push each step, and wait for its CI result before proceeding to the next step.
+
+Keep SignedUrl URL parsing, canonicalization, and redirect behavior unchanged unless explicitly requested: small changes have historically had significant consequences. The audience is intentionally optional; do not make it mandatory. Distinguish Detector mode validation from the modes carried by signed tokens.

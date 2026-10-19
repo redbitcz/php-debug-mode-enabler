@@ -42,7 +42,7 @@ $production = $resolved === null ? false : !$resolved;
 ```
 
 For former static calls with a custom fallback, construct a Detector and use `resolve()`.
-When using `MODE_ENABLER` or `MODE_FULL`, pass an `Enabler` instance to the constructor,
+When using `ModeEnabler` or `ModeFull`, pass an `Enabler` instance to the constructor,
 as before. There is no static `resolve()` shortcut.
 
 ## Firebase JWT v7
@@ -67,3 +67,10 @@ with `base64_encode(random_bytes(32))` and store it in application configuration
 Do not generate a different secret for every request. Changing a secret invalidates
 links signed with the previous secret. The application's SignedUrl token format has
 not otherwise changed in this migration.
+
+## PascalCase constants
+
+Constants in Detector and SignedUrl now use PascalCase, without legacy aliases.
+Update references such as `Detector::MODE_FULL` to `Detector::ModeFull`,
+`Detector::DEBUG_ENV_NAME` to `Detector::DebugEnvName`, and
+`SignedUrl::VALUE_ENABLE` to `SignedUrl::ValueEnable`. Values are unchanged.

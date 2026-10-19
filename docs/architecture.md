@@ -2,7 +2,7 @@
 
 ## Detector
 
-The default `MODE_SIMPLE` includes cookie, environment, and IP detection. `MODE_FULL` additionally enables Enabler detection and requires an Enabler instance. Static `detect()` requires a temporary directory when Enabler mode is enabled.
+The default `ModeSimple` includes cookie, environment, and IP detection. `ModeFull` additionally enables Enabler detection and requires an Enabler instance. Static `detect()` requires a temporary directory when Enabler mode is enabled.
 
 Built-in precedence is **Enabler → disabling cookie → environment → IP**. The first non-null result wins, including `false`. Plugins are inserted before or after this chain with `prependPlugin()` and `appendPlugin()`; appended plugins may never run if an earlier rule decides. Detection is evaluated on each call.
 
@@ -35,7 +35,7 @@ Signed URLs use the `_debug` query parameter. Tokens carry issuer `cz.redbit.deb
 - Signing requires an absolute URL. Normalization supplies `/` for an empty path and excludes fragments from the signed subject while preserving them in generated links.
 - Preserve raw query ordering and repeated parameters. Verification deliberately avoids `parse_str()` because it would change the signed URL.
 - Extra query parameters after `_debug` are rejected by default. Explicit redirect mode can strip them; the response sends a redirect and terminates execution.
-- `MODE_REQUEST` returns a result for the current request. `MODE_ENABLER` also activates the attached Enabler until token expiry; without an Enabler, it still returns the request result. `MODE_DEACTIVATE_ENABLER` deactivates an attached Enabler and returns `null`.
+- `ModeRequest` returns a result for the current request. `ModeEnabler` also activates the attached Enabler until token expiry; without an Enabler, it still returns the request result. `ModeDeactivateEnabler` deactivates an attached Enabler and returns `null`.
 - Plugin invocation catches `SignedUrlVerificationException` and returns `null`, allowing later detection rules to decide.
 - Use a strong secret and distinct audiences for different deployments, as described in README.
 - Deterministic tests set both SignedUrl's signing timestamp and Firebase's verification timestamp. Signature fixtures target v7 JSON encoding.

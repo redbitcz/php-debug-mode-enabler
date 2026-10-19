@@ -67,8 +67,10 @@ class Enabler
             'domain' => $domain ?? $this->cookieOptions['domain'],
             'secure' => $secure ?? $this->cookieOptions['secure'],
             'httponly' => $httponly ?? $this->cookieOptions['httponly'],
-            'samesite' => $samesite ?? $this->cookieOptions['samesite'],
-        ];
+        ] + $this->cookieOptions;
+        if ($samesite !== null) {
+            $this->cookieOptions['samesite'] = $samesite;
+        }
         return $this;
     }
 

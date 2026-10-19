@@ -20,7 +20,12 @@ Package is optimized for invoking in very early lifecycle phase of your App
 ## Requirements
 Package requires:
 
-- PHP version 8.0, 8.1, 8.2, 8.3 or 8.4
+- PHP 8.3 or newer within PHP 8.x (`^8.3`)
+- `ext-json`
+- Nette Utils `^3.0 || ^4.0 || dev-master`
+
+CI targets PHP 8.3, 8.4, 8.5, and 8.6. The Utils development branch is allowed
+for PHP 8.6 compatibility until a compatible stable release is available.
 
 Enabler requires:
  
@@ -28,7 +33,7 @@ Enabler requires:
 
 SignUrl plugin requires:
 
-- [Firebase JWT](https://github.com/firebase/php-jwt) v5 or v6
+- [Firebase JWT](https://github.com/firebase/php-jwt) v7
 
 ## Installation
 ```shell
@@ -181,10 +186,22 @@ $detector->isDebugMode(); // <---- this invoke all Plugins
 
 ## SignUrl plugin
 
+Install the optional JWT dependency when using this plugin:
+
+```shell
+composer require firebase/php-jwt:^7.0
+```
+
+The Detector itself does not require JWT. Older JWT versions can remain installed for
+unrelated application features, but cannot be used by the built-in SignedUrl adapter.
+
+
 `SignUrl` plugin provide secure way to share link with activated Debug Mode. 
 
 ```php
-$plugin = \Redbitcz\DebugMode\Plugin\SignedUrl::create('secretkey', 'HS256', 'https://myapp.cz');
+// Load a persistent secret from your application's configuration.
+// Generate it once with base64_encode(random_bytes(32)) for HS256.
+$plugin = \Redbitcz\DebugMode\Plugin\SignedUrl::create($secretKey, 'HS256', 'https://myapp.cz');
 $detector->appendPlugin($plugin);
 
 $signedUrl = $plugin->signUrl('https://myapp.cz/failingPage', '+1 hour');

@@ -18,8 +18,7 @@ use Nette\Utils\DateTime;
 use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
 use Redbitcz\DebugMode\Detector;
-use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV5;
-use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV6;
+use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV7;
 use Redbitcz\DebugMode\Plugin\JWT\JWTImpl;
 use RuntimeException;
 
@@ -61,18 +60,17 @@ class SignedUrl implements Plugin
     /**
      * @param string|resource|OpenSSLAsymmetricKey|OpenSSLCertificate $key The key.
      * @param string $algorithm Supported algorithms are 'ES384','ES256', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', and 'RS512'
-     * @noinspection PhpRedundantVariableDocTypeInspection
      */
     public static function create($key, string $algorithm = 'HS256', ?string $audience = null): self
     {
         /** @var class-string<JWTImpl> $impl */
-        foreach ([JWTFirebaseV5::class, JWTFirebaseV6::class] as $impl) {
+        foreach ([JWTFirebaseV7::class] as $impl) {
             if ($impl::isAvailable()) {
                 return new self(new $impl($key, $algorithm), $audience);
             }
         }
 
-        throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ~5.0 or ~6.0');
+        throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ^7.0');
     }
 
     /**

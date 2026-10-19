@@ -4,18 +4,21 @@
  * The MIT License (MIT)
  * Copyright (c) 2023 Redbit s.r.o., Jakub Bouček
  *
- * @noinspection PhpUndefinedClassInspection OpenSSL only optional dependency
+ * @noinspection PhpComposerExtensionStubsInspection OpenSSL only optional dependency
  */
 
 declare(strict_types=1);
 
 namespace Redbitcz\DebugMode\Plugin\JWT;
 
+use Composer\InstalledVersions;
 use Firebase\JWT\JWT;
-use ReflectionMethod;
+use Firebase\JWT\Key;
+use OpenSSLAsymmetricKey;
+use OpenSSLCertificate;
 use stdClass;
 
-class JWTFirebaseV5 implements JWTImpl
+class JWTFirebaseV7 implements JWTImpl
 {
     /** @var OpenSSLAsymmetricKey|OpenSSLCertificate|resource|string */
     protected $key;
@@ -33,26 +36,20 @@ class JWTFirebaseV5 implements JWTImpl
 
     public static function isAvailable(): bool
     {
-        if (class_exists(JWT::class) === false) {
+        if (!class_exists(JWT::class) || !class_exists(InstalledVersions::class)
+            || !InstalledVersions::isInstalled('firebase/php-jwt')) {
             return false;
         }
 
-        $params = (new ReflectionMethod(JWT::class, 'decode'))->getParameters();
-
-        // JWT v5 has second parameter named `$key`
-        if ($params[1]->getName() === 'key') {
-            return true;
-        }
-
-        // JWT v5.5.0 already second parameter named `$keyOrKeyArray`, detect by third param (future compatibility)
-        return $params[1]->getName() === 'keyOrKeyArray'
-            && isset($params[2])
-            && $params[2]->getName() === 'allowed_algs';
+        $version = InstalledVersions::getVersion('firebase/php-jwt');
+        return $version !== null
+            && version_compare($version, '7.0.0', '>=')
+            && explode('.', $version)[0] === '7';
     }
 
     public function decode(string $jwt): stdClass
     {
-        return JWT::decode($jwt, $this->key, [$this->algorithm]);
+        return JWT::decode($jwt, new Key($this->key, $this->algorithm));
     }
 
     public function encode(array $payload): string

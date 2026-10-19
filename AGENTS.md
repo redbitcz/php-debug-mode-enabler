@@ -15,7 +15,7 @@
 - `src/InconsistentEnablerModeException.php`: invalid Detector/Enabler configuration.
 - `src/Plugin/Plugin.php`: invokable detection plugin contract.
 - `src/Plugin/SignedUrl.php`: signed URL generation, verification, and optional Enabler activation.
-- `src/Plugin/JWT/`: abstraction and adapters for Firebase JWT v5 and v6.
+- `src/Plugin/JWT/`: the extensible `JWTImpl` contract and Firebase JWT v7 adapter.
 - `src/Plugin/SignedUrlVerificationException.php`: signed request validation failures.
 - `tests/DetectorTest.php`, `tests/Plugin/SignUrlTest.php`: Nette Tester suites; `tests/bootstrap.php` loads Composer and configures Tester.
 - `README.md`: public usage and integration examples.
@@ -26,8 +26,9 @@ See [architecture and validation notes](docs/architecture.md) for behavior detai
 
 ## Compatibility and conventions
 
-- Composer requires PHP `~8.0` (PHP 8.x), `ext-json`, and `nette/utils` `^3.0 || ^4.0`. Keep source syntax compatible with PHP 8.0.
-- Firebase JWT is optional at runtime and required for SignedUrl. Preserve v5 and v6 support; it is a development dependency for tests.
+- Composer requires PHP `^8.3`, `ext-json`, and `nette/utils` `^3.0 || ^4.0 || dev-master`. Keep source syntax compatible with PHP 8.3. The Utils development branch is intentionally allowed for PHP 8.6 compatibility until a compatible stable release is available.
+- Development tools require Nette Tester `^2.6` and PHPStan `^2.3`. Tester no longer needs a development branch for PHP 8.6 support.
+- Firebase JWT is optional at runtime and required for SignedUrl. Only v7 is supported by the built-in adapter; it is a development dependency for tests. Keep `JWTImpl` and adapter selection extensible for future major versions. Do not add a package-wide conflict with older JWT versions: Detector users may need them for unrelated features.
 - PSR-4 maps `Redbitcz\DebugMode\` to `src/` and `Redbitcz\DebugModeTests\` to `tests/`.
 - Follow existing style: strict types, four spaces, typed properties and signatures, PHPDoc for array shapes and compatibility-dependent types, braces on separate lines for classes and methods.
 - Preserve existing public constant names and early-bootstrap independence. `resolve()` and individual rules/plugins return `?bool`; the four main detection methods return `bool` with production as the undecided fallback and reject removed fallback arguments. This is not a Nette application despite its Nette utility and test dependencies.
@@ -41,10 +42,10 @@ composer run test -- -C
 composer run phpstan
 ```
 
-`-C` keeps the active PHP configuration for Tester. PHPStan analyzes `src/` at level 5; JWT adapters are excluded because their dependency APIs differ. Review existing exclusions and suppressions before changing analysis configuration.
+`-C` keeps the active PHP configuration for Tester. PHPStan analyzes `src/` at level 5; The JWT adapter directory still has a legacy exclusion from the former multi-version integration. Review existing exclusions and suppressions before changing analysis configuration.
 
 If a sandbox prevents PHPStan from opening its parallel-worker socket, run `composer run phpstan -- --debug` to analyze without parallel workers.
 
 Tests use `Tester\TestCase`, `@testCase`, data providers, and a final `(new ...())->run()` call. Preserve method isolation when tests manipulate environment variables, superglobals, or `JWT::$timestamp`. Existing Detector tests purge `tests/temp/enabler`.
 
-CI runs tests and PHPStan separately against Firebase JWT v5/v6. The working-tree workflow inspected during initialization lists PHP 8.0–8.5; README currently lists 8.0–8.4. Check the current workflow before changing compatibility claims.
+CI runs tests and PHPStan separately against Firebase JWT v7. The PHP matrix targets 8.3, 8.4, 8.5, and 8.6. Check the current workflow before changing compatibility claims.

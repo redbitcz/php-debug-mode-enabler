@@ -21,23 +21,15 @@ jobs:
             run: composer run test -- -C
 
         php:
-          - "8.0"
-          - "8.1"
-          - "8.2"
           - "8.3"
           - "8.4"
           - "8.5"
+          - "8.6"
 
         jwt:
-          - name: JWT 5
-            key: jtw5
-            arg: '"firebase/php-jwt:^5.0"'
-
-          - name: JWT 6
-            key: jwt6
-            # arg: '"firebase/php-jwt:^6.0"'
-            # Temporary solution until the stable JWT 6 with PHP 8.4 support is released
-            arg: '"firebase/php-jwt:dev-main"'
+          - name: JWT 7
+            key: jwt7
+            arg: '"firebase/php-jwt:^7.0"'
 
     name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.jwt.name }}
     runs-on: ubuntu-latest

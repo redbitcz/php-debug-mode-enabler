@@ -28,7 +28,7 @@ Storage reads tolerate I/O failures by returning an empty list. Invalid JSON emi
 
 ## Signed URLs and JWT
 
-SignedUrl selects the Firebase adapter by inspecting `JWT::decode()` parameters. Preserve the special handling of v5.5, whose second parameter resembles v6. The v6 adapter extends v5 but decodes with a `Firebase\JWT\Key`.
+SignedUrl retains the `JWTImpl` interface and adapter-selection loop for future major versions. The built-in `JWTFirebaseV7` adapter uses Composer 2 installed-version metadata to accept only stable v7 releases and decodes with a `Firebase\JWT\Key`. Missing JWT or an unsupported version causes the factory to throw a clear `LogicException`; Detector remains usable. The v5 and v6 adapters have been removed.
 
 Signed URLs use the `_debug` query parameter. Tokens carry issuer `cz.redbit.debug.url`, audience, issue/expiry timestamps, URL subject, allowed HTTP methods, mode, and value. JWT decoding verifies the signature and time constraints; SignedUrl verifies required claims, issuer/audience, mode/value, URL, and HTTP method.
 
@@ -38,9 +38,19 @@ Signed URLs use the `_debug` query parameter. Tokens carry issuer `cz.redbit.deb
 - `MODE_REQUEST` returns a result for the current request. `MODE_ENABLER` also activates the attached Enabler until token expiry; without an Enabler, it still returns the request result. `MODE_DEACTIVATE_ENABLER` deactivates an attached Enabler and returns `null`.
 - Plugin invocation catches `SignedUrlVerificationException` and returns `null`, allowing later detection rules to decide.
 - Use a strong secret and distinct audiences for different deployments, as described in README.
-- Deterministic tests set both SignedUrl's signing timestamp and Firebase's verification timestamp. Fixtures differ between JWT versions because JSON encoding differs.
+- Deterministic tests set both SignedUrl's signing timestamp and Firebase's verification timestamp. Signature fixtures target v7 JSON encoding.
 
-## Validation baseline: 2026-10-19
+## Current platform requirements
+
+PHP `^8.3`, Nette Utils `^3.0 || ^4.0 || dev-master`, optional Firebase JWT `^7.0`.
+Development tools: Nette Tester `^2.6` and PHPStan `^2.3`. CI targets PHP 8.3–8.6.
+Utils permits the development branch for PHP 8.6 compatibility; Tester supports it
+through the stable constraint.
+
+## Historical initialization baseline: 2026-10-19
+
+The following results predate the PHP 8.3 minimum and dependency upgrades. They are
+historical observations, not instructions to run the current project on PHP 8.2.
 
 Initialization changed documentation only. `.github/workflows/code_analysis.yaml` already had an uncommitted change and was left intact.
 

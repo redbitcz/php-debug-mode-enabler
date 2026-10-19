@@ -23,6 +23,7 @@
 - `phpstan.neon`, `.github/workflows/code_analysis.yaml`: static analysis and CI configuration.
 
 See [architecture and validation notes](docs/architecture.md) for behavior details and the initialization baseline.
+See [major-version review](docs/review.md) for reproduced edge cases and deferred work at commit `7917a42`.
 
 ## Compatibility and conventions
 

@@ -8,6 +8,9 @@ on:
       - main
 
 
+permissions:
+  contents: read
+
 jobs:
   code_analysis:
     strategy:
@@ -69,8 +72,8 @@ jobs:
           key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.key }}
 
 
-      - name: Install Composer
-        run: composer update --no-progress --with ${{ matrix.jwt.arg }}
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress --with ${{ matrix.jwt.arg }}
 
 
       - name: Run job

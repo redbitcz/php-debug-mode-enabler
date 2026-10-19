@@ -49,3 +49,5 @@ If a sandbox prevents PHPStan from opening its parallel-worker socket, run `comp
 Tests use `Tester\TestCase`, `@testCase`, data providers, and a final `(new ...())->run()` call. Preserve method isolation when tests manipulate environment variables, superglobals, or `JWT::$timestamp`. Existing Detector tests purge `tests/temp/enabler`.
 
 CI runs tests and PHPStan separately against Firebase JWT v7. The PHP matrix targets 8.3, 8.4, 8.5, and 8.6. Check the current workflow before changing compatibility claims.
+
+Preserve both Composer download-cache and `composer.lock` caching in CI; retaining the lock cache is an intentional project requirement for CI performance. Apply workflow maintenance in separate commits, push each step, and wait for its CI result before proceeding to the next step.

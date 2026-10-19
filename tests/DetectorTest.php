@@ -32,6 +32,86 @@ class DetectorTest extends TestCase
         Helpers::purge(self::TEMP_DIR);
     }
 
+    public function testUndecidedDefaultsToProduction(): void
+    {
+        $detector = new Detector(0);
+        Assert::null($detector->resolve());
+        Assert::false($detector->isDebugMode());
+        Assert::true($detector->isProductionMode());
+        Assert::false(Detector::detect(0));
+        Assert::true(Detector::detectProduction(0));
+    }
+
+    public function getDecisionProvider(): array
+    {
+        return [[null], [true], [false]];
+    }
+
+    /** @dataProvider getDecisionProvider */
+    public function testResolvedDecision(?bool $decision): void
+    {
+        $detector = new Detector(0);
+        $detector->appendPlugin(new class($decision) implements Plugin {
+            private ?bool $decision;
+
+            public function __construct(?bool $decision)
+            {
+                $this->decision = $decision;
+            }
+
+            public function __invoke(Detector $detector): ?bool
+            {
+                return $this->decision;
+            }
+        });
+
+        Assert::same($decision, $detector->resolve());
+        Assert::same($decision ?? false, $detector->isDebugMode());
+        Assert::same(!($decision ?? false), $detector->isProductionMode());
+    }
+
+    /** @dataProvider getDecisionProvider */
+    public function testStaticDecision(?bool $decision): void
+    {
+        $original = getenv(Detector::DEBUG_ENV_NAME);
+        putenv(Detector::DEBUG_ENV_NAME . ($decision === null ? '' : '=' . (int)$decision));
+        try {
+            Assert::same($decision ?? false, Detector::detect(Detector::MODE_ENV));
+            Assert::same(!($decision ?? false), Detector::detectProduction(Detector::MODE_ENV));
+        } finally {
+            putenv(Detector::DEBUG_ENV_NAME . ($original === false ? '' : '=' . $original));
+        }
+    }
+
+    public function testRemovedDefaultArguments(): void
+    {
+        $detector = new Detector(0);
+        foreach (['isDebugMode', 'isProductionMode'] as $method) {
+            foreach ([null, false, true] as $default) {
+                Assert::exception(static function () use ($detector, $method, $default) {
+                    $detector->$method($default);
+                }, \ArgumentCountError::class, '%a%no longer accepts a default%a%');
+            }
+            Assert::exception(static function () use ($detector, $method) {
+                $detector->$method(default: null);
+            }, \Error::class, 'Unknown named parameter $default');
+        }
+        foreach (['detect', 'detectProduction'] as $method) {
+            foreach ([null, false, true] as $default) {
+                Assert::exception(static function () use ($method, $default) {
+                    Detector::$method(0, null, $default);
+                }, \ArgumentCountError::class, '%a%no longer accepts a default%a%');
+            }
+            Assert::exception(static function () use ($method) {
+                Detector::$method(default: null);
+            }, \Error::class, 'Unknown named parameter $default');
+            Assert::exception(static function () use ($method) {
+                Detector::$method(Detector::MODE_FULL);
+            }, InconsistentEnablerModeException::class);
+            Assert::same($method === 'detectProduction', Detector::$method(Detector::MODE_ENABLER, self::TEMP_DIR));
+        }
+    }
+
     public function getEnvDataProvider(): array
     {
         return [
@@ -286,7 +366,8 @@ class DetectorTest extends TestCase
             }
         );
 
-        Assert::equal($result, $detector->isDebugMode());
+        Assert::same($result, $detector->resolve());
+        Assert::same($result, $detector->isDebugMode());
     }
 
 
@@ -329,7 +410,8 @@ class DetectorTest extends TestCase
             }
         );
 
-        Assert::equal($result, $detector->isDebugMode());
+        Assert::same($result, $detector->resolve());
+        Assert::same($result, $detector->isDebugMode());
     }
 }
 

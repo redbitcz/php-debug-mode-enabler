@@ -7,8 +7,10 @@ The default `MODE_SIMPLE` includes cookie, environment, and IP detection. `MODE_
 Built-in precedence is **Enabler → disabling cookie → environment → IP**. The first non-null result wins, including `false`. Plugins are inserted before or after this chain with `prependPlugin()` and `appendPlugin()`; appended plugins may never run if an earlier rule decides. Detection is evaluated on each call.
 
 - `true` enables debug mode; `false` disables it; `null` means continue.
-- `isDebugMode()` and `detect()` default to `false`, but accept a nullable fallback.
-- `isProductionMode()` inverts boolean results and preserves `null`. Its fallback defaults to `false`, whereas static `detectProduction()` defaults to `true`; do not assume these defaults are identical.
+- `resolve()` returns the first non-null rule result, or `null` when no rule decides.
+- `isDebugMode()` and `detect()` always return `bool`, defaulting to `false`.
+- `isProductionMode()` and `detectProduction()` always return `bool`, defaulting to `true`.
+- These four methods no longer accept `$default`. Explicit argument-count guards reject obsolete positional fallback arguments; PHP rejects obsolete named arguments. See [migration notes](../UPGRADE.md).
 - `app-debug-mode` is a disabling-only cookie. It must never become an unauthenticated way to enable debugging.
 - `APP_DEBUG` and the disabling cookie use numeric checks followed by integer casts, not exact string comparisons. Preserve or explicitly test changes to accepted values.
 - Default allowed addresses are `::1` and `127.0.0.1`. IP detection uses `REMOTE_ADDR`, falling back to the hostname from `php_uname('n')`.

@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Redbitcz\DebugMode;
 
+use ArgumentCountError;
 use Redbitcz\DebugMode\Plugin\Plugin;
 
 class Detector
@@ -85,43 +86,35 @@ class Detector
         return $this->enabler;
     }
 
-    /**
-     * Detect Debug mode by all method enabled by Detector mode
-     * Returned value:
-     *   - `false` (force to turn-off debug mode)
-     *   - `true` (force to turn-on debug mode)
-     *   - `null` (unknown/automatic debug mode state)
-     */
-    public function isDebugMode(?bool $default = false): ?bool
+    /** Resolve enabled rules, returning null when none decides. */
+    public function resolve(): ?bool
     {
         foreach ($this->detections as $detection) {
             if (($result = $detection($this)) !== null) {
                 return $result;
             }
         }
-        return $default;
+        return null;
     }
 
-    /**
-     * Detect Production mode (opposite to Debug mode) by all method enabled by Detector mode
-     * Returned value:
-     *   - `false` (force to turn-on debug mode)
-     *   - `true` (force to turn-off debug mode)
-     *   - `null` (unknown/automatic debug mode state)
-     */
-    public function isProductionMode(?bool $default = false): ?bool
+    /** Detect debug mode, defaulting to production when no rule decides. */
+    public function isDebugMode(): bool
     {
-        if (is_bool($default)) {
-            $default = !$default;
+        if (func_num_args() > 0) {
+            throw new ArgumentCountError(__METHOD__ . ' no longer accepts a default; use resolve() instead');
         }
 
-        $result = $this->isDebugMode($default);
+        return $this->resolve() ?? false;
+    }
 
-        if (is_bool($result)) {
-            $result = !$result;
+    /** Detect production mode, defaulting to production when no rule decides. */
+    public function isProductionMode(): bool
+    {
+        if (func_num_args() > 0) {
+            throw new ArgumentCountError(__METHOD__ . ' no longer accepts a default; use resolve() instead');
         }
 
-        return $result;
+        return !$this->isDebugMode();
     }
 
     /**
@@ -228,47 +221,42 @@ class Detector
     }
 
     /**
-     * Shortcut to simple detect Debug mode by all method enabled by Detector mode (argument `$mode`)
+     * Detect debug mode without configuring an instance.
      *
-     * @param int $mode Enables methods which is used to detect Debug mode
-     * @param string|null $tempDir Path to temp directory. Optional, but required when Enabler mode is enabled
-     * @param bool|null $default Default value when no method matches
+     * @param int $mode Enabled detection methods
+     * @param string|null $tempDir Required when Enabler mode is enabled
      */
-    public static function detect(
-        int $mode = self::MODE_SIMPLE,
-        ?string $tempDir = null,
-        ?bool $default = false
-    ): ?bool {
+    public static function detect(int $mode = self::MODE_SIMPLE, ?string $tempDir = null): bool
+    {
+        if (func_num_args() > 2) {
+            throw new ArgumentCountError(__METHOD__ . ' no longer accepts a default; use resolve() on an instance instead');
+        }
+
+        return self::createDetector($mode, $tempDir)->isDebugMode();
+    }
+
+    /**
+     * Detect production mode without configuring an instance.
+     *
+     * @param int $mode Enabled detection methods
+     * @param string|null $tempDir Required when Enabler mode is enabled
+     */
+    public static function detectProduction(int $mode = self::MODE_SIMPLE, ?string $tempDir = null): bool
+    {
+        if (func_num_args() > 2) {
+            throw new ArgumentCountError(__METHOD__ . ' no longer accepts a default; use resolve() on an instance instead');
+        }
+
+        return self::createDetector($mode, $tempDir)->isProductionMode();
+    }
+
+    private static function createDetector(int $mode, ?string $tempDir): self
+    {
         if ($tempDir === null && $mode & self::MODE_ENABLER) {
             throw new InconsistentEnablerModeException('Enabler mode (and Full mode) requires \'tempDir\' argument');
         }
 
         $enabler = $tempDir === null ? null : new Enabler($tempDir);
-        return (new self($mode, $enabler))->isDebugMode($default);
-    }
-
-    /**
-     * Shortcut to simple detect Production mode by all method enabled by Detector mode (argument `$mode`)
-     *
-     * @param int $mode Enables methods which is used to detect Debug mode
-     * @param string|null $tempDir Path to temp directory. Optional, but required when Enabler mode is enabled
-     * @param bool|null $default Default value when no method matches
-     */
-    public static function detectProduction(
-        int $mode = self::MODE_SIMPLE,
-        ?string $tempDir = null,
-        ?bool $default = true
-    ): ?bool {
-        if (is_bool($default)) {
-            $default = !$default;
-        }
-
-        $result = self::detect($mode, $tempDir, $default);
-
-        if (is_bool($result)) {
-            $result = !$result;
-        }
-
-        return $result;
+        return new self($mode, $enabler);
     }
 }

@@ -30,7 +30,7 @@ See [architecture and validation notes](docs/architecture.md) for behavior detai
 - Firebase JWT is optional at runtime and required for SignedUrl. Preserve v5 and v6 support; it is a development dependency for tests.
 - PSR-4 maps `Redbitcz\DebugMode\` to `src/` and `Redbitcz\DebugModeTests\` to `tests/`.
 - Follow existing style: strict types, four spaces, typed properties and signatures, PHPDoc for array shapes and compatibility-dependent types, braces on separate lines for classes and methods.
-- Preserve existing public constant names, nullable detection semantics, and early-bootstrap independence. This is not a Nette application despite its Nette utility and test dependencies.
+- Preserve existing public constant names and early-bootstrap independence. `resolve()` and individual rules/plugins return `?bool`; the four main detection methods return `bool` with production as the undecided fallback and reject removed fallback arguments. This is not a Nette application despite its Nette utility and test dependencies.
 - `vendor/`, `composer.lock`, test output, `tests/lock`, and `tests/temp` are ignored. Do not commit installed dependencies or generated test artifacts.
 
 ## Development checks

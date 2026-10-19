@@ -43,6 +43,21 @@ $debugMode = \Redbitcz\DebugMode\Detector::detect(); //bool
 
 It returns `$debugMode` = `true` when it detects Debug environment or manually switched.
 
+`detect()` and `isDebugMode()` always return `bool`. If no rule decides, they return `false`.
+`detectProduction()` and `isProductionMode()` return the opposite result, defaulting to `true`.
+These four methods do not accept a fallback argument.
+
+For advanced detection without a fallback, use an instance:
+
+```php
+$detector = new \Redbitcz\DebugMode\Detector();
+$result = $detector->resolve(); // true, false, or null when no rule decides
+$debugMode = $result ?? false; // application-defined fallback
+```
+
+See [UPGRADE.md](UPGRADE.md) for migration from the nullable detection API.
+
+
 ### Using with Nette
 In Boostrap use package like in this example:
 ```php

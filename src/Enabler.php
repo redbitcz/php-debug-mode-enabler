@@ -67,8 +67,10 @@ class Enabler
             'domain' => $domain ?? $this->cookieOptions['domain'],
             'secure' => $secure ?? $this->cookieOptions['secure'],
             'httponly' => $httponly ?? $this->cookieOptions['httponly'],
-            'samesite' => $samesite ?? $this->cookieOptions['samesite'],
-        ];
+        ] + $this->cookieOptions;
+        if ($samesite !== null) {
+            $this->cookieOptions['samesite'] = $samesite;
+        }
         return $this;
     }
 
@@ -268,7 +270,9 @@ class Enabler
         $file = $this->getStorageFileName();
 
         try {
-            return Json::decode(FileSystem::read($file), Json::FORCE_ARRAY);
+            $list = Json::decode(FileSystem::read($file), Json::FORCE_ARRAY);
+            // Validate individual tokens only when looking up their value.
+            return is_array($list) ? $list : [];
         } catch (IOException $e) {
             // Yep, no error thrown, maybe file not exists
             return [];

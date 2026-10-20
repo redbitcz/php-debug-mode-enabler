@@ -24,8 +24,8 @@ Package requires:
 - `ext-json`
 - Nette Utils `^3.0 || ^4.0 || dev-master`
 
-CI targets PHP 8.3, 8.4, 8.5, and 8.6. The Utils development branch is allowed
-for PHP 8.6 compatibility until a compatible stable release is available.
+The Utils development branch is allowed for PHP 8.6 compatibility until a compatible
+stable release is available.
 
 Enabler requires:
  
@@ -43,30 +43,31 @@ composer require redbitcz/debug-mode-enabler
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:
 ```php
-$debugMode = \Redbitcz\DebugMode\Detector::detect(); //bool
+use Redbitcz\DebugMode\Detector;
+
+$debugMode = Detector::detect(); //bool
 ```
 
 It returns `$debugMode` = `true` when it detects Debug environment or manually switched.
 
 `detect()` and `isDebugMode()` always return `bool`. If no rule decides, they return `false`.
 `detectProduction()` and `isProductionMode()` return the opposite result, defaulting to `true`.
-These four methods do not accept a fallback argument.
 
 For advanced detection without a fallback, use an instance:
 
 ```php
-$detector = new \Redbitcz\DebugMode\Detector();
+$detector = new Detector();
 $result = $detector->resolve(); // true, false, or null when no rule decides
 $debugMode = $result ?? false; // application-defined fallback
 ```
 
-See [UPGRADE.md](UPGRADE.md) for migration from the nullable detection API.
+See [UPGRADE.md](UPGRADE.md) for migration from v5 to v6.
 
 
 ### Using with Nette
 In Boostrap use package like in this example:
 ```php
-$debugModeDetector = new \Redbitcz\DebugMode\Detector();
+$debugModeDetector = new Detector();
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -97,9 +98,11 @@ Enabler provide feature to force enable or disable Debug Mode anywhere for user'
 This example turn on Debug Mode for user's browser:
 
 ```php
-$enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
+use Redbitcz\DebugMode\Detector;
+use Redbitcz\DebugMode\Enabler;
 
-$detector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::ModeFull, $enabler);
+$enabler = new Enabler($tempDir);
+$detector = new Detector(Detector::ModeFull, $enabler);
 
 $enabler->activate(true);
 ```
@@ -123,8 +126,8 @@ To re-use already existing instance you can inject it to DI Container:
 
 ```php
 $tempDir = __DIR__ . '/../temp';
-$enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
-$debugModeDetector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::ModeFull, $enabler);
+$enabler = new Enabler($tempDir);
+$debugModeDetector = new Detector(Detector::ModeFull, $enabler);
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -177,7 +180,7 @@ if (…) {
 Your Plugin you can register to Detector with method `appendPlugin()` or `prepedndPlugin()`.
 
 ```php
-$detector = new \Redbitcz\DebugMode\Detector();
+$detector = new Detector();
 
 $plugin = new MyPlugin();
 
@@ -194,16 +197,17 @@ Install the optional JWT dependency when using this plugin:
 composer require firebase/php-jwt:^7.0
 ```
 
-The Detector itself does not require JWT. Older JWT versions can remain installed for
-unrelated application features, but cannot be used by the built-in SignedUrl adapter.
+The Detector itself does not require JWT.
 
 
 `SignUrl` plugin provide secure way to share link with activated Debug Mode. 
 
 ```php
+use Redbitcz\DebugMode\Plugin\SignedUrl;
+
 // Load a persistent secret from your application's configuration.
 // Generate it once with base64_encode(random_bytes(32)) for HS256.
-$plugin = \Redbitcz\DebugMode\Plugin\SignedUrl::create($secretKey, 'HS256', 'https://myapp.cz');
+$plugin = SignedUrl::create($secretKey, 'HS256', 'https://myapp.cz');
 $detector->appendPlugin($plugin);
 
 $signedUrl = $plugin->signUrl('https://myapp.cz/failingPage', '+1 hour');

@@ -1,41 +1,33 @@
 # Project guide
 
-## Communication and documentation
+## Working conventions
 
-- Communicate with the user in Czech. Write code, comments, and project documentation in English.
-- Keep durable code and project knowledge in this file or linked files in `docs/`. Personal memory is reserved for user preferences and feedback, never project facts.
-- Preserve existing uncommitted changes. Keep initialization and documentation work separate from behavior changes or dependency upgrades.
+- Write code, comments and documentation in English.
+- Document current behavior in the repository and migration steps in `UPGRADE.md`.
+  Put work history, review deliberations and validation milestones in PR descriptions.
+- Use strict types, four spaces, PascalCase constants and the existing brace style.
+  Prefer native types; avoid complex PHPDoc solely to increase the PHPStan level.
 
-## Purpose and layout
+## Design constraints
 
-`redbitcz/debug-mode-enabler` is a standalone PHP library that decides whether an application should enable debug mode. It does not provide debugging tools. It runs early in application bootstrap, before a framework DI container is available.
+This standalone library decides debug mode during early bootstrap, before a DI
+container exists. See [architecture](docs/architecture.md) for rule ordering,
+persistence and SignedUrl behavior; [README](README.md) for usage and
+[UPGRADE](UPGRADE.md) for v5 → v6 migration.
 
-- `src/Detector.php`: ordered detection rules, mode flags, plugins, and static convenience methods.
-- `src/Enabler.php`: browser-specific overrides backed by a cookie and a temporary token file.
-- `src/InconsistentEnablerModeException.php`: invalid Detector/Enabler configuration.
-- `src/Plugin/Plugin.php`: invokable detection plugin contract.
-- `src/Plugin/SignedUrl.php`: signed URL generation, verification, and optional Enabler activation.
-- `src/Plugin/JWT/`: the extensible `JWTImpl` contract and Firebase JWT v7 adapter.
-- `src/Plugin/SignedUrlVerificationException.php`: signed request validation failures.
-- `tests/DetectorTest.php`, `tests/Plugin/SignUrlTest.php`: Nette Tester suites; `tests/bootstrap.php` loads Composer and configures Tester.
-- `README.md`: public usage and integration examples.
-- `.phpstorm.meta.php`: IDE suggestions for modes and algorithms; update when changing the corresponding public API.
-- `phpstan.neon`, `.github/workflows/code_analysis.yaml`: static analysis and CI configuration.
+- Keep source compatible with PHP 8.3. Dependency constraints live in `composer.json`.
+  Nette Utils allows dev-master for PHP 8.6 compatibility pending a stable release.
+- JWT is optional for Detector-only applications. Preserve `JWTImpl` and extensible
+  adapter selection. Do not impose a package-wide conflict with older JWT versions.
+- Keep URL parsing, canonicalization and redirects unchanged unless requested.
+  Audience is intentionally optional. Invalid JWT input must remain neutral (`null`).
+- Storage reads check the top-level array only; do not add token or expiry filtering.
+- Update `.phpstorm.meta.php` when changing public modes or algorithms.
+- Preserve both Composer download and lock-file caches in CI. Apply workflow changes
+  in separate commits, push each step and wait for CI before proceeding.
+- Do not commit dependencies, `composer.lock` or generated test artifacts.
 
-See [architecture and validation notes](docs/architecture.md) for behavior details and the initialization baseline.
-See [major-version review](docs/review.md) for reproduced edge cases and deferred work at commit `7917a42`.
-
-## Compatibility and conventions
-
-- Composer requires PHP `^8.3`, `ext-json`, and `nette/utils` `^3.0 || ^4.0 || dev-master`. Keep source syntax compatible with PHP 8.3. The Utils development branch is intentionally allowed for PHP 8.6 compatibility until a compatible stable release is available.
-- Development tools require Nette Tester `^2.6` and PHPStan `^2.3`. Tester no longer needs a development branch for PHP 8.6 support.
-- Firebase JWT is optional at runtime and required for SignedUrl. Only v7 is supported by the built-in adapter; it is a development dependency for tests. Keep `JWTImpl` and adapter selection extensible for future major versions. Do not add a package-wide conflict with older JWT versions: Detector users may need them for unrelated features.
-- PSR-4 maps `Redbitcz\DebugMode\` to `src/` and `Redbitcz\DebugModeTests\` to `tests/`.
-- Follow existing style: strict types, four spaces, typed properties and signatures, PHPDoc for array shapes and compatibility-dependent types, braces on separate lines for classes and methods.
-- Use PascalCase for project constants; preserve their values and early-bootstrap independence. `resolve()` and individual rules/plugins return `?bool`; the four main detection methods return `bool` with production as the undecided fallback and reject removed fallback arguments. This is not a Nette application despite its Nette utility and test dependencies.
-- `vendor/`, `composer.lock`, test output, `tests/lock`, and `tests/temp` are ignored. Do not commit installed dependencies or generated test artifacts.
-
-## Development checks
+## Validation
 
 ```sh
 composer install
@@ -43,16 +35,11 @@ composer run test -- -C
 composer run phpstan
 ```
 
-`-C` keeps the active PHP configuration for Tester. PHPStan analyzes `src/` at level 5; JWT adapters are included in analysis. Review existing exclusions and suppressions before changing analysis configuration.
+Tester uses `TestCase`, `@testCase` and a final `run()` call. Restore modified globals,
+environment variables and `JWT::$timestamp`. Persistence tests use unique temporary
+paths via the Enabler constructor and delete only their own data. Their namespaced
+`setcookie()` spy captures cookie output; it does not test browser enforcement.
 
-If a sandbox prevents PHPStan from opening its parallel-worker socket, run `composer run phpstan -- --debug` to analyze without parallel workers.
-
-Tests use `Tester\TestCase`, `@testCase`, data providers, and a final `(new ...())->run()` call. Preserve method isolation when tests manipulate environment variables, superglobals, or `JWT::$timestamp`. Existing Detector tests purge `tests/temp/enabler`. The dedicated `tests/EnablerTest.php` suite uses a unique system temporary directory per test, passed to the existing constructor, and deletes only that directory. A namespaced `setcookie()` spy captures cookie output in its isolated test process. `tests/Plugin/SignedUrlNegativeTest.php` covers invalid tokens through Detector and restores request globals and the JWT clock.
-
-CI runs tests and PHPStan separately against Firebase JWT v7. The PHP matrix targets 8.3, 8.4, 8.5, and 8.6. Check the current workflow before changing compatibility claims.
-
-Preserve both Composer download-cache and `composer.lock` caching in CI; retaining the lock cache is an intentional project requirement for CI performance. Apply workflow maintenance in separate commits, push each step, and wait for its CI result before proceeding to the next step.
-
-Keep SignedUrl URL parsing, canonicalization, and redirect behavior unchanged unless explicitly requested: small changes have historically had significant consequences. The audience is intentionally optional; do not make it mandatory. Distinguish Detector mode validation from the modes carried by signed tokens.
-
-Prefer native parameter, property, and return types, including straightforward unions. Avoid expanding complex array-shape annotations solely to increase the PHPStan level. Level 6 was evaluated after the JWT migration: Enabler storage/list array types remain the main obstacle; level 5 is retained.
+PHPStan analyzes `src/` at level 5, including JWT adapters. If sandbox restrictions
+prevent worker sockets, use `composer run phpstan -- --debug`. The CI PHP matrix is
+maintained in `.github/workflows/code_analysis.yaml`.

@@ -1,12 +1,10 @@
-# Upgrading to the next major version
+# Upgrading from v5 to v6
 
 ## Platform and dependency requirements
 
 The minimum PHP version is now 8.3 (`^8.3`); PHP 8.0–8.2 are no longer supported.
-CI targets PHP 8.3–8.6. Nette Utils allows `^3.0 || ^4.0 || dev-master`; the development
-branch is intentionally available for PHP 8.6 compatibility pending a stable release.
-Development dependencies now require Nette Tester `^2.6` and PHPStan `^2.3`.
-The Tester development-branch alternative has been removed.
+Nette Utils allows `^3.0 || ^4.0 || dev-master`; the development branch is available
+for PHP 8.6 compatibility pending a stable release.
 
 ## Boolean detection methods
 
@@ -55,9 +53,7 @@ composer require firebase/php-jwt:^7.0
 ```
 
 `JWTFirebaseV5` and `JWTFirebaseV6` have been removed. Use `JWTFirebaseV7` when
-constructing an adapter explicitly. `JWTImpl`, custom adapter injection, and the
-factory's adapter-selection mechanism remain available for future implementations.
-Automatic version detection uses Composer 2 installed-package metadata.
+constructing an adapter explicitly. Custom adapters implementing `JWTImpl` remain supported.
 
 JWT remains optional for Detector-only applications. No package-wide conflict with
 older JWT releases is imposed; `SignedUrl::create()` rejects unsupported versions.

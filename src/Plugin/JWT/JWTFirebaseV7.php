@@ -48,23 +48,36 @@ class JWTFirebaseV7 implements JWTImpl
 
     public function decode(string $jwt): stdClass
     {
+        $this->validateTokenStructure($jwt);
+        return JWT::decode($jwt, new Key($this->key, $this->algorithm));
+    }
+
+    /**
+     * The Firebase JWT library throws DomainException (a LogicException) for invalid
+     * JSON and TypeError for some invalid header types. This pre-validation is needed
+     * even though the library also validates tokens: it reports these input failures
+     * as UnexpectedValueException so SignedUrl can silently return null and continue
+     * detection instead of aborting bootstrap. Configuration errors still propagate.
+     */
+    private function validateTokenStructure(string $jwt): void
+    {
+        $segments = explode('.', $jwt, 4);
+        if (count($segments) !== 3) {
+            throw new UnexpectedValueException('Wrong number of JWT segments');
+        }
+
         try {
-            return JWT::decode($jwt, new Key($this->key, $this->algorithm));
+            $header = JWT::jsonDecode(JWT::urlsafeB64Decode($segments[0]));
+            JWT::jsonDecode(JWT::urlsafeB64Decode($segments[1]));
         } catch (DomainException $e) {
-            // Firebase reports malformed input as DomainException (a LogicException),
-            // just like key configuration errors. Normalize only rejected JSON to a
-            // RuntimeException so SignedUrl silently returns null and detection continues.
-            // Revalidate only on failure to avoid relying on the library's error messages;
-            // use Firebase's decoder because it also rejects whitespace-padded null.
-            // Genuine configuration errors must still propagate.
-            foreach (array_slice(explode('.', $jwt), 0, 2) as $segment) {
-                try {
-                    JWT::jsonDecode(JWT::urlsafeB64Decode($segment));
-                } catch (DomainException) {
-                    throw new UnexpectedValueException('Invalid JSON in JWT token', 0, $e);
-                }
-            }
-            throw $e;
+            throw new UnexpectedValueException('Invalid JSON in JWT token', 0, $e);
+        }
+
+        if (!$header instanceof stdClass || !is_string($header->alg ?? null)) {
+            throw new UnexpectedValueException('JWT header alg must be a string');
+        }
+        if (isset($header->kid) && !is_string($header->kid)) {
+            throw new UnexpectedValueException('JWT header kid must be a string or null');
         }
     }
 

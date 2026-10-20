@@ -123,20 +123,30 @@ class SignUrlTest extends TestCase
         }
     }
 
-    public function getMalformedJsonTokens(): array
+    public function getInvalidTokenStructures(): array
     {
         $header = JWT::urlsafeB64Encode('{"alg":"HS256"}');
-        return [
+        $tokens = [
             ['eA.e30.eA'],
             ['IG51bGwg.e30.eA'], // Header containing whitespace-padded null.
             [$header . '.IG51bGwg.eA'], // Payload containing whitespace-padded null.
             [JWT::urlsafeB64Encode("\tnull\n") . '.e30.eA'],
             [$header . '.' . JWT::urlsafeB64Encode("\tnull\n") . '.eA'],
         ];
+        foreach (['[]', '42', 'true', '"header"', 'null', '{}',
+            '{"alg":["HS256"]}', '{"alg":{}}', '{"alg":123}', '{"alg":true}',
+            '{"alg":"HS256","kid":[]}', '{"alg":"HS256","kid":{}}',
+            '{"alg":"HS256","kid":123}', '{"alg":"HS256","kid":true}'] as $json) {
+            $tokens[] = [JWT::urlsafeB64Encode($json) . '.e30.eA'];
+        }
+        $tokens[] = [$header . '.eA.eA']; // Malformed payload JSON.
+        $tokens[] = ['one.two'];
+        $tokens[] = ['one.two.three.four'];
+        return $tokens;
     }
 
-    /** @dataProvider getMalformedJsonTokens */
-    public function testMalformedJsonThroughDetector(string $token): void
+    /** @dataProvider getInvalidTokenStructures */
+    public function testInvalidTokenStructureThroughDetector(string $token): void
     {
         $originalGet = $_GET;
         $originalServer = $_SERVER;
@@ -165,6 +175,15 @@ class SignUrlTest extends TestCase
         } finally {
             $_GET = $originalGet;
             $_SERVER = $originalServer;
+        }
+    }
+
+    public function testValidHeaderKeyIds(): void
+    {
+        $adapter = new JWTFirebaseV7(self::KeyHs256);
+        foreach ([[], ['kid' => null], ['kid' => ''], ['kid' => 'test-key']] as $header) {
+            $token = JWT::encode(['sub' => 'test'], self::KeyHs256, 'HS256', head: $header);
+            Assert::same('test', $adapter->decode($token)->sub);
         }
     }
 

@@ -123,14 +123,27 @@ class SignUrlTest extends TestCase
         }
     }
 
-    public function testMalformedJsonThroughDetector(): void
+    public function getMalformedJsonTokens(): array
+    {
+        $header = JWT::urlsafeB64Encode('{"alg":"HS256"}');
+        return [
+            ['eA.e30.eA'],
+            ['IG51bGwg.e30.eA'], // Header containing whitespace-padded null.
+            [$header . '.IG51bGwg.eA'], // Payload containing whitespace-padded null.
+            [JWT::urlsafeB64Encode("\tnull\n") . '.e30.eA'],
+            [$header . '.' . JWT::urlsafeB64Encode("\tnull\n") . '.eA'],
+        ];
+    }
+
+    /** @dataProvider getMalformedJsonTokens */
+    public function testMalformedJsonThroughDetector(string $token): void
     {
         $originalGet = $_GET;
         $originalServer = $_SERVER;
         try {
-            $_GET['_debug'] = 'eA.e30.eA';
+            $_GET['_debug'] = $token;
             $_SERVER['HTTP_HOST'] = 'host.tld';
-            $_SERVER['REQUEST_URI'] = '/?_debug=eA.e30.eA';
+            $_SERVER['REQUEST_URI'] = '/?_debug=' . rawurlencode($token);
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $_SERVER['HTTPS'] = 'on';
             $plugin = SignedUrl::create(self::KeyHs256);
@@ -138,8 +151,8 @@ class SignUrlTest extends TestCase
             $detector->appendPlugin($plugin);
             Assert::null($detector->resolve());
             Assert::false($detector->isDebugMode());
-            Assert::exception(static function () use ($plugin) {
-                $plugin->verifyToken('eA.e30.eA');
+            Assert::exception(static function () use ($plugin, $token) {
+                $plugin->verifyToken($token);
             }, SignedUrlVerificationException::class);
             $detector->appendPlugin(new class implements \Redbitcz\DebugMode\Plugin\Plugin {
                 public function __invoke(\Redbitcz\DebugMode\Detector $detector): ?bool

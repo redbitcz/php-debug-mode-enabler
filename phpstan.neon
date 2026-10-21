@@ -1,9 +1,6 @@
 parameters:
     paths:
         - src
-    excludePaths:
-        analyse:
-        - src/Plugin/JWT/*
 
     ignoreErrors:
         -   # Too variants of parameters signature between PHP versions

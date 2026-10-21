@@ -18,11 +18,11 @@ use Nette\Utils\Random;
 
 class Enabler
 {
-    private const STORAGE_FILE = '/debug/token.bin';
-    private const DEBUG_COOKIE_NAME = 'app-debug-token';
-    private const TOKEN_LENGTH = 30;
-    private const ID_LENGTH = 15;
-    private const DEFAULT_TTL = '1 hour';
+    private const string StorageFile = '/debug/token.bin';
+    private const string DebugCookieName = 'app-debug-token';
+    private const int TokenLength = 30;
+    private const int IdLength = 15;
+    private const string DefaultTtl = '1 hour';
 
     private string $tempDir;
     private ?bool $override = null;
@@ -41,8 +41,7 @@ class Enabler
         $this->tempDir = $tempDir;
     }
 
-    /** @return static */
-    public function setSecure(bool $secure = true): self
+    public function setSecure(bool $secure = true): static
     {
         $this->cookieOptions['secure'] = $secure;
 
@@ -55,40 +54,36 @@ class Enabler
         return $this;
     }
 
-    /**
-     * @return $this
-     * @see setcookie()
-     */
+    /** @see setcookie() */
     public function setCookieOptions(
         ?string $path = null,
         ?string $domain = null,
         ?bool $secure = null,
         ?bool $httponly = null,
         ?string $samesite = null
-    ): self {
+    ): static {
         $this->cookieOptions = [
             'path' => $path ?? $this->cookieOptions['path'],
             'domain' => $domain ?? $this->cookieOptions['domain'],
             'secure' => $secure ?? $this->cookieOptions['secure'],
             'httponly' => $httponly ?? $this->cookieOptions['httponly'],
-            'samesite' => $samesite ?? $this->cookieOptions['samesite'],
-        ];
+        ] + $this->cookieOptions;
+        if ($samesite !== null) {
+            $this->cookieOptions['samesite'] = $samesite;
+        }
         return $this;
     }
 
-    /**
-     * @param string|int|DateTimeInterface|null $expires
-     */
-    public function activate(bool $isDebug, $expires = null): void
+    public function activate(bool $isDebug, string|int|DateTimeInterface|null $expires = null): void
     {
         if ($tokenName = $this->getTokenName()) {
             $this->destroyToken($tokenName);
         }
 
-        $tokenExpires = (int)NetteDateTime::from($expires ?? self::DEFAULT_TTL)->format('U');
+        $tokenExpires = (int)NetteDateTime::from($expires ?? self::DefaultTtl)->format('U');
         $cookieExpires = $expires === null ? 0 : $tokenExpires;
         $tokenName = $this->createToken($isDebug, $tokenExpires);
-        setcookie(self::DEBUG_COOKIE_NAME, $tokenName, ['expires' => $cookieExpires] + $this->cookieOptions);
+        setcookie(self::DebugCookieName, $tokenName, ['expires' => $cookieExpires] + $this->cookieOptions);
 
         $this->override = $isDebug;
     }
@@ -100,7 +95,7 @@ class Enabler
             $this->destroyToken($tokenName);
         }
 
-        setcookie(self::DEBUG_COOKIE_NAME, '', ['expires' => time()] + $this->cookieOptions);
+        setcookie(self::DebugCookieName, '', ['expires' => time()] + $this->cookieOptions);
         $this->override = null;
     }
 
@@ -129,7 +124,7 @@ class Enabler
 
     private function getTokenName(): ?string
     {
-        return isset($_COOKIE[self::DEBUG_COOKIE_NAME]) ? (string)$_COOKIE[self::DEBUG_COOKIE_NAME] : null;
+        return isset($_COOKIE[self::DebugCookieName]) ? (string)$_COOKIE[self::DebugCookieName] : null;
     }
 
     // TOKEN MANIPULATION ----------------------------------------------------------------------------------------------
@@ -201,7 +196,7 @@ class Enabler
         $id = $this->getIdByName($name);
         $list = array_filter(
             $list,
-            static function ($token) use ($id) {
+            static function (array $token) use ($id): bool {
                 return $token['id'] !== $id;
             }
         );
@@ -215,7 +210,7 @@ class Enabler
         // Filter invalid and expired tokens
         $list = array_filter(
             $list,
-            function ($token) {
+            function (array $token): bool {
                 return $this->isTokenValid($token);
             }
         );
@@ -275,7 +270,9 @@ class Enabler
         $file = $this->getStorageFileName();
 
         try {
-            return Json::decode(FileSystem::read($file), Json::FORCE_ARRAY);
+            $list = Json::decode(FileSystem::read($file), Json::FORCE_ARRAY);
+            // Validate individual tokens only when looking up their value.
+            return is_array($list) ? $list : [];
         } catch (IOException $e) {
             // Yep, no error thrown, maybe file not exists
             return [];
@@ -291,7 +288,6 @@ class Enabler
 
     /**
      * @param array<int, array> $list
-     * @throws JsonException
      */
     private function writeStorage(array $list): void
     {
@@ -308,7 +304,7 @@ class Enabler
 
     private function getIdByName(string $name): string
     {
-        return substr($name, 0, self::ID_LENGTH);
+        return substr($name, 0, self::IdLength);
     }
 
     private function getHashByName(string $name): string
@@ -318,11 +314,11 @@ class Enabler
 
     private function getStorageFileName(): string
     {
-        return $this->tempDir . self::STORAGE_FILE;
+        return $this->tempDir . self::StorageFile;
     }
 
     private function generateTokenName(): string
     {
-        return Random::generate(self::TOKEN_LENGTH);
+        return Random::generate(self::TokenLength);
     }
 }

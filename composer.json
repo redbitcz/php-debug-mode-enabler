@@ -19,17 +19,17 @@
     ],
     "homepage": "https://github.com/redbitcz/php-debug-mode-enabler",
     "require": {
-        "php": "~8.0",
+        "php": "^8.3",
         "ext-json": "*",
-        "nette/utils": "^3.0 || ^4.0"
+        "nette/utils": "^3.0 || ^4.0 || dev-master"
     },
     "require-dev": {
-        "firebase/php-jwt": "^5.0 || ^6.0 || dev-main",
-        "nette/tester": "^2.5 || dev-master",
-        "phpstan/phpstan": "^2.1"
+        "firebase/php-jwt": "^7.0",
+        "nette/tester": "^2.6",
+        "phpstan/phpstan": "^2.3"
     },
     "suggest": {
-        "firebase/php-jwt": "Optional, required for SignedUrl plugin, compatible with version 5.x and 6.x"
+        "firebase/php-jwt": "Optional, required for SignedUrl plugin, compatible with version 7.x"
     },
     "autoload": {
         "psr-4": {

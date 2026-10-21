@@ -17,6 +17,7 @@ interface JWTImpl
 
     public function decode(string $jwt): stdClass;
 
+    /** @param array<string, mixed> $payload */
     public function encode(array $payload): string;
 
     public function setTimestamp(?int $timestamp): void;

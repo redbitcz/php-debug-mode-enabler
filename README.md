@@ -20,7 +20,12 @@ Package is optimized for invoking in very early lifecycle phase of your App
 ## Requirements
 Package requires:
 
-- PHP version 8.0, 8.1, 8.2, 8.3 or 8.4
+- PHP 8.3 or newer within PHP 8.x (`^8.3`)
+- `ext-json`
+- Nette Utils `^3.0 || ^4.0 || dev-master`
+
+The Utils development branch is allowed for PHP 8.6 compatibility until a compatible
+stable release is available.
 
 Enabler requires:
  
@@ -28,7 +33,7 @@ Enabler requires:
 
 SignUrl plugin requires:
 
-- [Firebase JWT](https://github.com/firebase/php-jwt) v5 or v6
+- [Firebase JWT](https://github.com/firebase/php-jwt) v7
 
 ## Installation
 ```shell
@@ -38,15 +43,31 @@ composer require redbitcz/debug-mode-enabler
 ## Using
 Anywhere in your app you can determine if app is running in Debug mode by simple code:
 ```php
-$debugMode = \Redbitcz\DebugMode\Detector::detect(); //bool
+use Redbitcz\DebugMode\Detector;
+
+$debugMode = Detector::detect(); //bool
 ```
 
 It returns `$debugMode` = `true` when it detects Debug environment or manually switched.
 
+`detect()` and `isDebugMode()` always return `bool`. If no rule decides, they return `false`.
+`detectProduction()` and `isProductionMode()` return the opposite result, defaulting to `true`.
+
+For advanced detection without a fallback, use an instance:
+
+```php
+$detector = new Detector();
+$result = $detector->resolve(); // true, false, or null when no rule decides
+$debugMode = $result ?? false; // application-defined fallback
+```
+
+See [UPGRADE.md](UPGRADE.md) for migration from v5 to v6.
+
+
 ### Using with Nette
 In Boostrap use package like in this example:
 ```php
-$debugModeDetector = new \Redbitcz\DebugMode\Detector();
+$debugModeDetector = new Detector();
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -75,10 +96,13 @@ Please use it with great caution only! Wrong use might cause critical security i
 Enabler provide feature to force enable or disable Debug Mode anywhere for user's browser (drived by Cookie).
 
 This example turn on Debug Mode for user's browser:
-```php
-$enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
 
-$detector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::MODE_FULL, $enabler);
+```php
+use Redbitcz\DebugMode\Detector;
+use Redbitcz\DebugMode\Enabler;
+
+$enabler = new Enabler($tempDir);
+$detector = new Detector(Detector::ModeFull, $enabler);
 
 $enabler->activate(true);
 ```
@@ -99,10 +123,11 @@ At most cases this example creates second instance of `Enabler` class because fi
 internally with `Detector` instance in `Bootstrap`.
 
 To re-use already existing instance you can inject it to DI Container:
+
 ```php
 $tempDir = __DIR__ . '/../temp';
-$enabler = new \Redbitcz\DebugMode\Enabler($tempDir);
-$debugModeDetector = new \Redbitcz\DebugMode\Detector(\Redbitcz\DebugMode\Detector::MODE_FULL, $enabler);
+$enabler = new Enabler($tempDir);
+$debugModeDetector = new Detector(Detector::ModeFull, $enabler);
 
 $configurator = new Configurator();
 $configurator->setDebugMode($debugModeDetector->isDebugMode());
@@ -155,7 +180,7 @@ if (…) {
 Your Plugin you can register to Detector with method `appendPlugin()` or `prepedndPlugin()`.
 
 ```php
-$detector = new \Redbitcz\DebugMode\Detector();
+$detector = new Detector();
 
 $plugin = new MyPlugin();
 
@@ -166,10 +191,23 @@ $detector->isDebugMode(); // <---- this invoke all Plugins
 
 ## SignUrl plugin
 
+Install the optional JWT dependency when using this plugin:
+
+```shell
+composer require firebase/php-jwt:^7.0
+```
+
+The Detector itself does not require JWT.
+
+
 `SignUrl` plugin provide secure way to share link with activated Debug Mode. 
 
 ```php
-$plugin = \Redbitcz\DebugMode\Plugin\SignedUrl::create('secretkey', 'HS256', 'https://myapp.cz');
+use Redbitcz\DebugMode\Plugin\SignedUrl;
+
+// Load a persistent secret from your application's configuration.
+// Generate it once with base64_encode(random_bytes(32)) for HS256.
+$plugin = SignedUrl::create($secretKey, 'HS256', 'https://myapp.cz');
 $detector->appendPlugin($plugin);
 
 $signedUrl = $plugin->signUrl('https://myapp.cz/failingPage', '+1 hour');

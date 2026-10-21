@@ -5,8 +5,11 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
 
+
+permissions:
+  contents: read
 
 jobs:
   code_analysis:
@@ -21,30 +24,22 @@ jobs:
             run: composer run test -- -C
 
         php:
-          - "8.0"
-          - "8.1"
-          - "8.2"
           - "8.3"
           - "8.4"
           - "8.5"
+          - "8.6"
 
         jwt:
-          - name: JWT 5
-            key: jtw5
-            arg: '"firebase/php-jwt:^5.0"'
-
-          - name: JWT 6
-            key: jwt6
-            # arg: '"firebase/php-jwt:^6.0"'
-            # Temporary solution until the stable JWT 6 with PHP 8.4 support is released
-            arg: '"firebase/php-jwt:dev-main"'
+          - name: JWT 7
+            key: jwt7
+            arg: '"firebase/php-jwt:^7.0"'
 
     name: ${{ matrix.actions.name }} on PHP ${{ matrix.php }} with ${{ matrix.jwt.name }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
 
       # see https://github.com/shivammathur/setup-php
@@ -60,25 +55,25 @@ jobs:
       - name: Get Composer Cache Directory
         id: composer-cache
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
+          echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-data-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.name }}
 
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             **/composer.lock
           key: ${{ runner.os }}-composer-lock-${{ hashFiles('composer.json') }}-php-${{ matrix.php }}-${{ matrix.jwt.key }}
 
 
-      - name: Install Composer
-        run: composer update --no-progress --with ${{ matrix.jwt.arg }}
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress --with ${{ matrix.jwt.arg }}
 
 
       - name: Run job

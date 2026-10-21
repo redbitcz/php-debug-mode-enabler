@@ -12,9 +12,10 @@ declare(strict_types=1);
 
 namespace Redbitcz\DebugModeTests\Plugin;
 
+use Composer\InstalledVersions;
 use Firebase\JWT\JWT;
 use LogicException;
-use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV6;
+use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV7;
 use Redbitcz\DebugMode\Plugin\SignedUrl;
 use Redbitcz\DebugMode\Plugin\SignedUrlVerificationException;
 use Tester\Assert;
@@ -24,28 +25,198 @@ require __DIR__ . '/../bootstrap.php';
 
 class SignUrlTest extends TestCase
 {
-    private const KEY_HS256 = "zhYiojmp7O3VYQNuW0C5rS0VgFNgoAvuxW4IdS/0tn8";
+    private const string KeyHs256 = "zhYiojmp7O3VYQNuW0C5rS0VgFNgoAvuxW4IdS/0tn8";
 
+
+    public function testAdapter(): void
+    {
+        Assert::true(JWTFirebaseV7::isAvailable());
+        Assert::type(JWTFirebaseV7::class, SignedUrl::create(self::KeyHs256)->getJwt());
+    }
+
+    public function getUnsupportedVersions(): array
+    {
+        return [['5.5.1.0'], ['6.11.1.0'], ['8.0.0.0-beta1'], ['8.0.0.0'], ['dev-main'], [null]];
+    }
+
+    /** @dataProvider getUnsupportedVersions */
+    public function testUnsupportedVersion(?string $version): void
+    {
+        $original = InstalledVersions::getAllRawData()[0];
+        $data = $original;
+        if ($version === null) {
+            unset($data['versions']['firebase/php-jwt']);
+        } else {
+            $data['versions']['firebase/php-jwt']['version'] = $version;
+        }
+        // Keep autoloading, but isolate the metadata from registered vendor directories.
+        $loaders = \Composer\Autoload\ClassLoader::getRegisteredLoaders();
+        foreach ($loaders as $loader) {
+            $loader->unregister();
+            spl_autoload_register([$loader, 'loadClass']);
+        }
+        InstalledVersions::reload($data);
+        try {
+            Assert::false(JWTFirebaseV7::isAvailable());
+            Assert::exception(static function () {
+                SignedUrl::create(self::KeyHs256);
+            }, LogicException::class, '%a%requires JWT library: firebase/php-jwt version ^7.0');
+            Assert::false(\Redbitcz\DebugMode\Detector::detect(0));
+        } finally {
+            InstalledVersions::reload($original);
+            foreach ($loaders as $loader) {
+                spl_autoload_unregister([$loader, 'loadClass']);
+                $loader->register();
+            }
+        }
+    }
+
+    public function testAdapterTimestamp(): void
+    {
+        $adapter = new JWTFirebaseV7(self::KeyHs256);
+        $original = JWT::$timestamp;
+        try {
+            $adapter->setTimestamp(1600000000);
+            $token = $adapter->encode(['exp' => 1600000060]);
+            Assert::same(1600000060, $adapter->decode($token)->exp);
+            $adapter->setTimestamp(1600000060);
+            Assert::exception(static function () use ($adapter, $token) {
+                $adapter->decode($token);
+            }, \Firebase\JWT\ExpiredException::class);
+            $adapter->setTimestamp(null);
+            Assert::null(JWT::$timestamp);
+        } finally {
+            JWT::$timestamp = $original;
+        }
+    }
+
+    public function testRsaKeyObjects(): void
+    {
+        if (!extension_loaded('openssl')) {
+            $this->skip('OpenSSL is required for RSA key objects');
+        }
+        $privateKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        Assert::type(\OpenSSLAsymmetricKey::class, $privateKey);
+        $details = openssl_pkey_get_details($privateKey);
+        $publicKey = openssl_pkey_get_public($details['key']);
+        Assert::type(\OpenSSLAsymmetricKey::class, $publicKey);
+
+        $signer = SignedUrl::create($privateKey, 'RS256', 'test.keys');
+        $verifier = SignedUrl::create($publicKey, 'RS256', 'test.keys');
+        $expires = time() + 60;
+        $url = $signer->signUrl('https://host.tld/path', $expires);
+        Assert::same([['get'], SignedUrl::ModeRequest, SignedUrl::ValueEnable, $expires], $verifier->verifyUrl($url));
+    }
+
+    public function testResourceKeyRejected(): void
+    {
+        $resource = fopen('php://memory', 'r+');
+        try {
+            Assert::exception(static function () use ($resource) {
+                SignedUrl::create($resource);
+            }, \TypeError::class);
+            Assert::exception(static function () use ($resource) {
+                new JWTFirebaseV7($resource);
+            }, \TypeError::class);
+        } finally {
+            fclose($resource);
+        }
+    }
+
+    public function getInvalidTokenStructures(): array
+    {
+        $header = JWT::urlsafeB64Encode('{"alg":"HS256"}');
+        $tokens = [
+            ['eA.e30.eA'],
+            ['IG51bGwg.e30.eA'], // Header containing whitespace-padded null.
+            [$header . '.IG51bGwg.eA'], // Payload containing whitespace-padded null.
+            [JWT::urlsafeB64Encode("\tnull\n") . '.e30.eA'],
+            [$header . '.' . JWT::urlsafeB64Encode("\tnull\n") . '.eA'],
+        ];
+        foreach (['[]', '42', 'true', '"header"', 'null', '{}',
+            '{"alg":["HS256"]}', '{"alg":{}}', '{"alg":123}', '{"alg":true}',
+            '{"alg":"HS256","kid":[]}', '{"alg":"HS256","kid":{}}',
+            '{"alg":"HS256","kid":123}', '{"alg":"HS256","kid":true}'] as $json) {
+            $tokens[] = [JWT::urlsafeB64Encode($json) . '.e30.eA'];
+        }
+        $tokens[] = [$header . '.eA.eA']; // Malformed payload JSON.
+        $tokens[] = ['one.two'];
+        $tokens[] = ['one.two.three.four'];
+        return $tokens;
+    }
+
+    /** @dataProvider getInvalidTokenStructures */
+    public function testInvalidTokenStructureThroughDetector(string $token): void
+    {
+        $originalGet = $_GET;
+        $originalServer = $_SERVER;
+        try {
+            $_GET['_debug'] = $token;
+            $_SERVER['HTTP_HOST'] = 'host.tld';
+            $_SERVER['REQUEST_URI'] = '/?_debug=' . rawurlencode($token);
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_SERVER['HTTPS'] = 'on';
+            $plugin = SignedUrl::create(self::KeyHs256);
+            $detector = new \Redbitcz\DebugMode\Detector(0);
+            $detector->appendPlugin($plugin);
+            Assert::null($detector->resolve());
+            Assert::false($detector->isDebugMode());
+            Assert::exception(static function () use ($plugin, $token) {
+                $plugin->verifyToken($token);
+            }, SignedUrlVerificationException::class);
+            $detector->appendPlugin(new class implements \Redbitcz\DebugMode\Plugin\Plugin {
+                public function __invoke(\Redbitcz\DebugMode\Detector $detector): ?bool
+                {
+                    return true;
+                }
+            });
+            Assert::true($detector->resolve());
+            Assert::true($detector->isDebugMode());
+        } finally {
+            $_GET = $originalGet;
+            $_SERVER = $originalServer;
+        }
+    }
+
+    public function testValidHeaderKeyIds(): void
+    {
+        $adapter = new JWTFirebaseV7(self::KeyHs256);
+        foreach ([[], ['kid' => null], ['kid' => ''], ['kid' => 'test-key']] as $header) {
+            $token = JWT::encode(['sub' => 'test'], self::KeyHs256, 'HS256', head: $header);
+            Assert::same('test', $adapter->decode($token)->sub);
+        }
+    }
+
+    public function testInvalidVerificationKeyIsNotIgnored(): void
+    {
+        $token = SignedUrl::create(self::KeyHs256)->getToken(
+            'https://host.tld/', ['get'], time() + 60, SignedUrl::ModeRequest, SignedUrl::ValueEnable
+        );
+        Assert::exception(static function () use ($token) {
+            SignedUrl::create('short')->verifyToken($token);
+        }, \DomainException::class);
+    }
+
+    public function testShortKey(): void
+    {
+        $plugin = SignedUrl::create('too-short', 'HS256');
+        Assert::exception(static function () use ($plugin) {
+            $plugin->signUrl('https://host.tld/path', '+1 hour');
+        }, \DomainException::class);
+    }
 
     public function testSign(): void
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path', 1600000600);
 
-        if ($plugin->getJwt() instanceof JWTFirebaseV6) {
-            $expected = 'https://host.tld/path?_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVi'
-                . 'dWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRw'
-                . 'czovL2hvc3QudGxkL3BhdGgiLCJtZXRoIjpbImdldCJdLCJtb2QiOjAsInZhbCI6MX0.h2TAkamMzGVQkre-F9kaCSmg3irRt9qv'
-                . '84oUcxj9gv0';
-        } else {
-            $expected = 'https://host.tld/path?_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVi'
-                . 'dWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRw'
-                . 'czpcL1wvaG9zdC50bGRcL3BhdGgiLCJtZXRoIjpbImdldCJdLCJtb2QiOjAsInZhbCI6MX0.MTZOii4lQ2WCk1UltRx_e9T5vCT7'
-                . 'nq8G3kh4D8EXy7s';
-        }
+        $expected = 'https://host.tld/path?_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVi'
+            . 'dWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbiIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDAwNjAwLCJzdWIiOiJodHRw'
+            . 'czovL2hvc3QudGxkL3BhdGgiLCJtZXRoIjpbImdldCJdLCJtb2QiOjAsInZhbCI6MX0.h2TAkamMzGVQkre-F9kaCSmg3irRt9qv'
+            . '84oUcxj9gv0';
 
         Assert::equal($expected, $token);
     }
@@ -54,21 +225,14 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path?query=value', 1600000600);
 
-        if ($plugin->getJwt() instanceof JWTFirebaseV6) {
-            $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5y'
-                . 'ZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnblF1ZXJ5IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDA2'
-                . 'MDAsInN1YiI6Imh0dHBzOi8vaG9zdC50bGQvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFsIjox'
-                . 'fQ.UXB2AIKChgunDzoY7hcWNA7vg7j6sf3VvOWFw0OKz8k';
-        } else {
-            $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5y'
-                . 'ZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnblF1ZXJ5IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDA2'
-                . 'MDAsInN1YiI6Imh0dHBzOlwvXC9ob3N0LnRsZFwvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFs'
-                . 'IjoxfQ.RrO7BCmdgldB7OlEIpudBWo8P33xDh-MsNjtZC34CNY';
-        }
+        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5y'
+            . 'ZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnblF1ZXJ5IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDA2'
+            . 'MDAsInN1YiI6Imh0dHBzOi8vaG9zdC50bGQvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFsIjox'
+            . 'fQ.UXB2AIKChgunDzoY7hcWNA7vg7j6sf3VvOWFw0OKz8k';
 
         Assert::equal($expected, $token);
     }
@@ -77,21 +241,14 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->signUrl('https://host.tld/path?query=value#fragment', 1600000600);
 
-        if ($plugin->getJwt() instanceof JWTFirebaseV6) {
-            $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5y'
-                . 'ZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbkZyYWdtZW50IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAw'
-                . 'MDA2MDAsInN1YiI6Imh0dHBzOi8vaG9zdC50bGQvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFs'
-                . 'IjoxfQ.-Aww363VPD0aSi5QK1JH2v_4yFU5DX5aRvbsxqtcJSg#fragment';
-        } else {
-            $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5y'
-                . 'ZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbkZyYWdtZW50IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAw'
-                . 'MDA2MDAsInN1YiI6Imh0dHBzOlwvXC9ob3N0LnRsZFwvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwi'
-                . 'dmFsIjoxfQ.9oIORBXW-hW8vTPdJglEdEMm19nwAvw2wLAxqWvFh3Y#fragment';
-        }
+        $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5y'
+            . 'ZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50ZXN0U2lnbkZyYWdtZW50IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAw'
+            . 'MDA2MDAsInN1YiI6Imh0dHBzOi8vaG9zdC50bGQvcGF0aD9xdWVyeT12YWx1ZSIsIm1ldGgiOlsiZ2V0Il0sIm1vZCI6MCwidmFs'
+            . 'IjoxfQ.-Aww363VPD0aSi5QK1JH2v_4yFU5DX5aRvbsxqtcJSg#fragment';
 
         Assert::equal($expected, $token);
     }
@@ -100,27 +257,20 @@ class SignUrlTest extends TestCase
     {
         $audience = 'test.' . __FUNCTION__;
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp(1600000000);
         $token = $plugin->getToken(
             'https://host.tld/path?query=value',
             ['get'],
             1600000600,
-            SignedUrl::MODE_REQUEST,
-            SignedUrl::VALUE_ENABLE
+            SignedUrl::ModeRequest,
+            SignedUrl::ValueEnable
         );
 
-        if ($plugin->getJwt() instanceof JWTFirebaseV6) {
-            $expected = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50Z'
-                . 'XN0R2V0VG9rZW4iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDYwMCwic3ViIjoiaHR0cHM6Ly9ob3N0LnRsZC9wYXRoP'
-                . '3F1ZXJ5PXZhbHVlIiwibWV0aCI6WyJnZXQiXSwibW9kIjowLCJ2YWwiOjF9.LrE8DVuvXiP4u3cHXiSABIOXI4WlHFBxf2g-DRYW'
-                . 'xNQ';
-        } else {
-            $expected = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50Z'
-                . 'XN0R2V0VG9rZW4iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDYwMCwic3ViIjoiaHR0cHM6XC9cL2hvc3QudGxkXC9wY'
-                . 'XRoP3F1ZXJ5PXZhbHVlIiwibWV0aCI6WyJnZXQiXSwibW9kIjowLCJ2YWwiOjF9.I6tEfFneSxuY9qAjRf5esYFPonChbliZqGoi'
-                . 'jtv2iHw';
-        }
+        $expected = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjei5yZWRiaXQuZGVidWcudXJsIiwiYXVkIjoidGVzdC50Z'
+            . 'XN0R2V0VG9rZW4iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDYwMCwic3ViIjoiaHR0cHM6Ly9ob3N0LnRsZC9wYXRoP'
+            . '3F1ZXJ5PXZhbHVlIiwibWV0aCI6WyJnZXQiXSwibW9kIjowLCJ2YWwiOjF9.LrE8DVuvXiP4u3cHXiSABIOXI4WlHFBxf2g-DRYW'
+            . 'xNQ';
 
         Assert::equal($expected, $token);
     }
@@ -130,17 +280,17 @@ class SignUrlTest extends TestCase
         $audience = 'test.' . __FUNCTION__;
         $timestamp = 1600000000;
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $token = $plugin->getToken(
             'https://host.tld/path?query=value',
             ['get'],
             1600000600,
-            SignedUrl::MODE_REQUEST,
-            SignedUrl::VALUE_ENABLE
+            SignedUrl::ModeRequest,
+            SignedUrl::ValueEnable
         );
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyToken($token);
@@ -154,11 +304,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path';
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyUrl($tokenUrl);
@@ -172,11 +322,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyUrl($tokenUrl);
@@ -190,11 +340,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         $parsed = $plugin->verifyRequest(false, $tokenUrl, 'GET');
@@ -206,7 +356,7 @@ class SignUrlTest extends TestCase
     {
         Assert::exception(static function () {
             $url = (string)base64_decode('Ly8Eijrg+qawZw==');
-            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KeyHs256, 'HS256');
             $plugin->signUrl($url, 1600000600);
         }, LogicException::class);
     }
@@ -215,7 +365,7 @@ class SignUrlTest extends TestCase
     {
         Assert::exception(static function () {
             $url = '/login?email=foo@bar.cz';
-            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KeyHs256, 'HS256');
             $plugin->signUrl($url, 1600000600);
         }, LogicException::class);
     }
@@ -226,11 +376,11 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256', $audience);
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256', $audience);
         $plugin->setTimestamp($timestamp);
         JWT::$timestamp = $timestamp;
         Assert::exception(static function () use ($plugin, $tokenUrl) {
@@ -241,7 +391,7 @@ class SignUrlTest extends TestCase
     public function testVerifyInvalidRequest(): void
     {
         Assert::exception(static function () {
-            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KeyHs256, 'HS256');
             $url = (string)base64_decode('Ly8Eijrg+qawZw==');
             $plugin->verifyRequest(false, $url, 'GET');
         }, SignedUrlVerificationException::class, 'Url is invalid');
@@ -250,7 +400,7 @@ class SignUrlTest extends TestCase
     public function testVerifyInvalidUrl(): void
     {
         Assert::exception(static function () {
-            $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
+            $plugin = SignedUrl::create(self::KeyHs256, 'HS256');
             $plugin->verifyUrl('https://host.tld/path?query=value');
         }, SignedUrlVerificationException::class, 'No token in URL');
     }
@@ -260,7 +410,7 @@ class SignUrlTest extends TestCase
         $timestamp = 1600000000;
         $url = 'https://host.tld/path?query=value';
 
-        $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
+        $plugin = SignedUrl::create(self::KeyHs256, 'HS256');
         $plugin->setTimestamp($timestamp);
         $tokenUrl = $plugin->signUrl($url, 1600000600);
 
@@ -268,7 +418,7 @@ class SignUrlTest extends TestCase
 
         Assert::exception(
             static function () use ($timestamp, $tokenUrl) {
-                $plugin = SignedUrl::create(self::KEY_HS256, 'HS256');
+                $plugin = SignedUrl::create(self::KeyHs256, 'HS256');
                 $plugin->setTimestamp($timestamp);
                 JWT::$timestamp = $timestamp;
                 $plugin->verifyUrl($tokenUrl);
@@ -288,7 +438,7 @@ class SignUrlTest extends TestCase
             . '&fbclid=123456789';
 
         // Mock plugin without redirect
-        $plugin = new class(SignedUrl::create(self::KEY_HS256)->getJwt(), 'test.testSign') extends SignedUrl {
+        $plugin = new class(SignedUrl::create(self::KeyHs256)->getJwt(), 'test.testSign') extends SignedUrl {
             protected function sendRedirectResponse(string $canonicalUrl): void
             {
                 $expected = 'https://host.tld/path?query=value&_debug=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJj'
@@ -315,7 +465,7 @@ class SignUrlTest extends TestCase
             . '#hash';
 
         // Mock plugin without redirect
-        $plugin = new class(SignedUrl::create(self::KEY_HS256)->getJwt(), 'test.testSign') extends SignedUrl {
+        $plugin = new class(SignedUrl::create(self::KeyHs256)->getJwt(), 'test.testSign') extends SignedUrl {
             protected function sendRedirectResponse(string $canonicalUrl): void
             {
                 $expected = 'https://host.tld/path?query=value'

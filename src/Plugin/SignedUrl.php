@@ -18,8 +18,7 @@ use Nette\Utils\DateTime;
 use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
 use Redbitcz\DebugMode\Detector;
-use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV5;
-use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV6;
+use Redbitcz\DebugMode\Plugin\JWT\JWTFirebaseV7;
 use Redbitcz\DebugMode\Plugin\JWT\JWTImpl;
 use RuntimeException;
 
@@ -30,19 +29,19 @@ class SignedUrl implements Plugin
 {
 
     /** Set debug mode only for signed request */
-    public const MODE_REQUEST = 0;
+    public const int ModeRequest = 0;
     /** Set debug mode permanent – requires Detector with prepared Enabler */
-    public const MODE_ENABLER = 1;
+    public const int ModeEnabler = 1;
     /** Deactivate Enabler – requires Detector with prepared Enabler */
-    public const MODE_DEACTIVATE_ENABLER = 2;
+    public const int ModeDeactivateEnabler = 2;
 
     /** Force turn-off debug mode  */
-    public const VALUE_DISABLE = 0;
+    public const int ValueDisable = 0;
     /** Force turn-on debug mode  */
-    public const VALUE_ENABLE = 1;
+    public const int ValueEnable = 1;
 
-    private const URL_QUERY_TOKEN_KEY = '_debug';
-    private const ISSUER_ID = 'cz.redbit.debug.url';
+    private const string UrlQueryTokenKey = '_debug';
+    private const string IssuerId = 'cz.redbit.debug.url';
 
     private ?string $audience;
     private ?int $timestamp;
@@ -59,31 +58,31 @@ class SignedUrl implements Plugin
     }
 
     /**
-     * @param string|resource|OpenSSLAsymmetricKey|OpenSSLCertificate $key The key.
      * @param string $algorithm Supported algorithms are 'ES384','ES256', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', and 'RS512'
-     * @noinspection PhpRedundantVariableDocTypeInspection
      */
-    public static function create($key, string $algorithm = 'HS256', ?string $audience = null): self
-    {
+    public static function create(
+        string|OpenSSLAsymmetricKey|OpenSSLCertificate $key,
+        string $algorithm = 'HS256',
+        ?string $audience = null
+    ): self {
         /** @var class-string<JWTImpl> $impl */
-        foreach ([JWTFirebaseV5::class, JWTFirebaseV6::class] as $impl) {
+        foreach ([JWTFirebaseV7::class] as $impl) {
             if ($impl::isAvailable()) {
                 return new self(new $impl($key, $algorithm), $audience);
             }
         }
 
-        throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ~5.0 or ~6.0');
+        throw new LogicException(__CLASS__ . ' requires JWT library: firebase/php-jwt version ^7.0');
     }
 
     /**
-     * @param string|int|DateTimeInterface $expire
      * @param array<int, string> $allowedHttpMethods
      */
     public function signUrl(
         string $url,
-        $expire,
-        int $mode = self::MODE_REQUEST,
-        int $value = self::VALUE_ENABLE,
+        string|int|DateTimeInterface $expire,
+        int $mode = self::ModeRequest,
+        int $value = self::ValueEnable,
         array $allowedHttpMethods = ['get']
     ): string {
         /** @var ParsedUrl|false $parsedUrl */
@@ -102,26 +101,25 @@ class SignedUrl implements Plugin
         $token = $this->getToken($this->buildUrl($signUrl), $allowedHttpMethods, $expire, $mode, $value);
 
         $parsedUrl['query'] = ltrim(($parsedUrl['query'] ?? '') . '&', '&')
-            . self::URL_QUERY_TOKEN_KEY . '=' . urlencode($token);
+            . self::UrlQueryTokenKey . '=' . urlencode($token);
 
         return $this->buildUrl($parsedUrl);
     }
 
     /**
      * @param array<int, string> $allowedMethods
-     * @param string|int|DateTimeInterface $expire
      */
     public function getToken(
         string $url,
         array $allowedMethods,
-        $expire,
+        string|int|DateTimeInterface $expire,
         int $mode,
         int $value
     ): string {
         $expire = (int)DateTime::from($expire)->format('U');
 
         $payload = [
-            'iss' => self::ISSUER_ID,
+            'iss' => self::IssuerId,
             'aud' => $this->audience,
             'iat' => $this->timestamp ?? time(),
             'exp' => $expire,
@@ -142,14 +140,14 @@ class SignedUrl implements Plugin
             return null;
         }
 
-        if ($mode === self::MODE_DEACTIVATE_ENABLER) {
+        if ($mode === self::ModeDeactivateEnabler) {
             if ($detector->hasEnabler()) {
                 $detector->getEnabler()->deactivate();
             }
             return null;
         }
 
-        if ($mode === self::MODE_ENABLER && $detector->hasEnabler()) {
+        if ($mode === self::ModeEnabler && $detector->hasEnabler()) {
             $detector->getEnabler()->activate((bool)$value, $expires);
         }
 
@@ -162,7 +160,7 @@ class SignedUrl implements Plugin
     public function verifyRequest(bool $allowRedirect = false, ?string $url = null, ?string $method = null): array
     {
         // Fastest to check to prevent burn CPU to obvious missing token
-        if ($url === null && isset($_GET[self::URL_QUERY_TOKEN_KEY]) === false) {
+        if ($url === null && isset($_GET[self::UrlQueryTokenKey]) === false) {
             throw new SignedUrlVerificationException('No token in URL');
         }
 
@@ -194,7 +192,7 @@ class SignedUrl implements Plugin
         // Note: Not parsed by parse_str() to prevent broke URL (repeated arguments like `?same_arg=1&same_arg=2`)
         $query = $parsedUrl['query'] ?? '';
         if (preg_match(
-                '/(?<token_key>(?:^|&|^&)' . self::URL_QUERY_TOKEN_KEY . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
+                '/(?<token_key>(?:^|&|^&)' . self::UrlQueryTokenKey . '=)(?<token>[^&]+)(?:$|(?<remaining>&.*$))/D',
                 $query,
                 $matches,
                 PREG_OFFSET_CAPTURE
@@ -262,7 +260,7 @@ class SignedUrl implements Plugin
 
         // Check mandatory claims
         if (
-            $payload->iss !== self::ISSUER_ID
+            $payload->iss !== self::IssuerId
             || ($payload->aud ?? null) !== $this->audience
         ) {
             throw new SignedUrlVerificationException('JWT Token mandatory Claims doesn\'t match');
@@ -271,10 +269,10 @@ class SignedUrl implements Plugin
         // Check valid mode & value claims
         if (in_array(
                 $payload->mod,
-                [self::MODE_REQUEST, self::MODE_ENABLER, self::MODE_DEACTIVATE_ENABLER],
+                [self::ModeRequest, self::ModeEnabler, self::ModeDeactivateEnabler],
                 true
             ) === false
-            || in_array($payload->val, [self::VALUE_DISABLE, self::VALUE_ENABLE], true) === false
+            || in_array($payload->val, [self::ValueDisable, self::ValueEnable], true) === false
         ) {
             throw new SignedUrlVerificationException('JWT Token values is out of range');
         }

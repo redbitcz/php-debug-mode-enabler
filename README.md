@@ -22,10 +22,7 @@ Package requires:
 
 - PHP 8.3 or newer within PHP 8.x (`^8.3`)
 - `ext-json`
-- Nette Utils `^3.0 || ^4.0 || dev-master`
-
-The Utils development branch is allowed for PHP 8.6 compatibility until a compatible
-stable release is available.
+- Nette Utils `^3.0 || ^4.0`
 
 Enabler requires:
  

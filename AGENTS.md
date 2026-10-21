@@ -16,7 +16,6 @@ persistence and SignedUrl behavior; [README](README.md) for usage and
 [UPGRADE](UPGRADE.md) for v5 → v6 migration.
 
 - Keep source compatible with PHP 8.3. Dependency constraints live in `composer.json`.
-  Nette Utils allows dev-master for PHP 8.6 compatibility pending a stable release.
 - JWT is optional for Detector-only applications. Preserve `JWTImpl` and extensible
   adapter selection. Do not impose a package-wide conflict with older JWT versions.
 - Keep URL parsing, canonicalization and redirects unchanged unless requested.

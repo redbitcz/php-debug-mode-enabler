@@ -21,7 +21,7 @@
     "require": {
         "php": "^8.3",
         "ext-json": "*",
-        "nette/utils": "^3.0 || ^4.0 || dev-master"
+        "nette/utils": "^3.0 || ^4.0"
     },
     "require-dev": {
         "firebase/php-jwt": "^7.0",

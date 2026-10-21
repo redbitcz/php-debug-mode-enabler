@@ -3,8 +3,7 @@
 ## Platform and dependency requirements
 
 The minimum PHP version is now 8.3 (`^8.3`); PHP 8.0–8.2 are no longer supported.
-Nette Utils allows `^3.0 || ^4.0 || dev-master`; the development branch is available
-for PHP 8.6 compatibility pending a stable release.
+Nette Utils allows `^3.0 || ^4.0`.
 
 ## Boolean detection methods
 
